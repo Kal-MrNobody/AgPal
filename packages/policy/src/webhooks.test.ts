@@ -140,7 +140,7 @@ describe.runIf(hasDb)('WebhookProcessor', () => {
         const r = await orig(req);
         return { batchId: r.batchId, itemStatus: 'PENDING' };
       };
-      const held = await gate.submit({
+      const r = await gate.submit({
         companyId: co,
         agentId: 'growth-agent',
         runId: newId('run'),
@@ -152,7 +152,6 @@ describe.runIf(hasDb)('WebhookProcessor', () => {
         category: 'content',
         reason: 'post',
       });
-      const r = await gate.approve(held.approvalId ?? '', 'founder');
       expect(r.status).toBe('pending');
       intentId = r.intentId;
     });

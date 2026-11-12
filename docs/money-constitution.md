@@ -164,16 +164,16 @@ attached, plus an alert. Resolution is a reversing entry plus the correct entry.
 
 Rules are config (zod-validated, per company). The LLM never sees or edits them.
 
-| Rule               | Revenue                                                  | Finance                                        | Support                           | Growth                            |
-| ------------------ | -------------------------------------------------------- | ---------------------------------------------- | --------------------------------- | --------------------------------- |
-| Actions allowed    | price_change, subscription_change, internal_invoice      | allocation, internal_invoice                   | refund, internal_invoice          | payout, internal_invoice          |
-| Auto-approve up to | —                                                        | $500 per allocation                            | $50 per refund                    | $50 per payout                    |
-| Hard per-tx cap    | —                                                        | $2,000                                         | order's captured amount           | $250                              |
-| Daily cap          | —                                                        | $3,000                                         | $200                              | $400                              |
-| Velocity           | 10 / hour                                                | 10 / hour                                      | 5 refunds / hour                  | 5 payouts / hour                  |
-| Payee allow-list   | n/a                                                      | n/a                                            | refund only to the original order | founder-approved contractors only |
-| Categories         | pricing                                                  | budgeting                                      | refunds                           | content, listings, launches       |
-| Always held        | every price_change; discounts below the floor are denied | moving money out of an envelope it doesn't own | dispute claim acceptance          | first payout to a new payee       |
+| Rule               | Revenue                                                  | Finance                                        | Support                           | Growth                                                                                         |
+| ------------------ | -------------------------------------------------------- | ---------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Actions allowed    | price_change, subscription_change, internal_invoice      | allocation, internal_invoice                   | refund, internal_invoice          | payout, internal_invoice                                                                       |
+| Auto-approve up to | —                                                        | $500 per allocation                            | $50 per refund                    | $50 per payout                                                                                 |
+| Hard per-tx cap    | —                                                        | $2,000                                         | order's captured amount           | $250                                                                                           |
+| Daily cap          | —                                                        | $3,000                                         | $200                              | $400                                                                                           |
+| Velocity           | 10 / hour                                                | 10 / hour                                      | 5 refunds / hour                  | 5 payouts / hour                                                                               |
+| Payee allow-list   | n/a                                                      | n/a                                            | refund only to the original order | founder-approved contractors only (adding a payee to the allow-list is the founder's approval) |
+| Categories         | pricing                                                  | budgeting                                      | refunds                           | content, listings, launches                                                                    |
+| Always held        | every price_change; discounts below the floor are denied | moving money out of an envelope it doesn't own | dispute claim acceptance          | (optional, off by default) first payout to a new payee                                         |
 
 **On breach:**
 

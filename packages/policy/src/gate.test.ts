@@ -72,6 +72,19 @@ describe.runIf(hasDb)('Gate (Postgres)', () => {
     await fund(500_000n);
     expect((await allocate('growth', '50000')).status).toBe('executed');
     await gate.allowPayee(co, 'alice@example.com', 'Alice', 'founder');
+    // These tests exercise the optional "hold the first payout to a payee" rule.
+    const { defaultPolicyConfig } = await import('./config.js');
+    await gate.setConfig(
+      co,
+      {
+        ...defaultPolicyConfig,
+        envelopes: {
+          ...defaultPolicyConfig.envelopes,
+          growth: { ...defaultPolicyConfig.envelopes.growth, holdFirstPayoutToNewPayee: true },
+        },
+      },
+      'founder',
+    );
   });
 
   it('auto-approves within policy, pays out once and books the constitution flow', async () => {

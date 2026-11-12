@@ -104,7 +104,7 @@ describe.runIf(enabled)('PayPal sandbox (integration)', () => {
       ).status,
     ).toBe('executed');
     await gate.allowPayee(co, 'agpal-contractor-a@example.com', 'Contractor A', 'founder');
-    const held = await gate.submit({
+    const r = await gate.submit({
       ...base,
       agentId: 'growth-agent',
       envelope: 'growth',
@@ -114,8 +114,7 @@ describe.runIf(enabled)('PayPal sandbox (integration)', () => {
       category: 'content',
       reason: 'Sandbox payout test',
     });
-    expect(held.decision.rule).toBe('payee.first_payout');
-    const r = await gate.approve(held.approvalId ?? '', 'founder', 'integration test');
+    expect(r.decision.rule).toBe('within_policy');
     expect(['executed', 'pending']).toContain(r.status);
     if (r.status === 'executed') {
       const fee = await ledger.balance(co, ACC.paypalFees);

@@ -4,6 +4,13 @@ import { spendIntentSchema, type SpendIntentInput } from './intent.js';
 import { decide, type Facts } from './rules.js';
 
 const config = parsePolicyConfig(defaultPolicyConfig);
+const strictFirstPayout = parsePolicyConfig({
+  ...defaultPolicyConfig,
+  envelopes: {
+    ...defaultPolicyConfig.envelopes,
+    growth: { ...defaultPolicyConfig.envelopes.growth, holdFirstPayoutToNewPayee: true },
+  },
+});
 
 const baseFacts: Facts = {
   companyKillSwitch: false,
@@ -74,11 +81,11 @@ const table: Row[] = [
     'within_policy',
   ],
   [
-    'first payout to new payee',
+    'first payout to an allow-listed payee is not held by default',
     {},
     { payeeHasPriorPayout: false },
-    'hold_for_founder',
-    'payee.first_payout',
+    'approve',
+    'within_policy',
   ],
   ['over daily cap ($400)', {}, { spentTodayMinor: 36_001n }, 'hold_for_founder', 'cap.daily'],
   ['at daily cap exactly', {}, { spentTodayMinor: 36_000n }, 'approve', 'within_policy'],
@@ -119,6 +126,17 @@ describe('decide (payout rules)', () => {
     const d = decide(config, payout(patch), { ...baseFacts, ...facts });
     expect({ outcome: d.outcome, rule: d.rule }).toEqual({ outcome, rule });
     expect(d.explanation.length).toBeGreaterThan(10);
+  });
+});
+
+describe('decide (optional first-payout hold)', () => {
+  it('holds the first payout to a payee when the company turns the rule on', () => {
+    expect(
+      decide(strictFirstPayout, payout(), { ...baseFacts, payeeHasPriorPayout: false }).rule,
+    ).toBe('payee.first_payout');
+    expect(
+      decide(strictFirstPayout, payout(), { ...baseFacts, payeeHasPriorPayout: true }).rule,
+    ).toBe('within_policy');
   });
 });
 

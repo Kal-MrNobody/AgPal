@@ -500,7 +500,11 @@ export class Gate {
             .where(eq(spendIntents.id, intentId));
           return { status: 'pending', externalRef: ref };
         }
-        await this.settlePayout(intentId, { itemId: ref, feeMinor: result.feeMinor });
+        await this.settlePayout(intentId, {
+          itemId: ref,
+          feeMinor: result.feeMinor,
+          ...(result.transactionId ? { transactionId: result.transactionId } : {}),
+        });
         return { status: 'executed', externalRef: ref };
       }
       case 'refund': {
@@ -559,7 +563,10 @@ export class Gate {
    * Book a payout once PayPal reports its fee (constitution §2.5): accrual + cash out, converting the hold.
    * Idempotent; called by the executor or by the payout webhook.
    */
-  async settlePayout(intentId: string, p: { itemId: string; feeMinor: bigint }): Promise<void> {
+  async settlePayout(
+    intentId: string,
+    p: { itemId: string; feeMinor: bigint; transactionId?: string },
+  ): Promise<void> {
     const [row] = await this.db.select().from(spendIntents).where(eq(spendIntents.id, intentId));
     if (!row?.holdId) throw new Error(`No payout intent ${intentId}`);
     const payee = await this.payeeByEmail(row.companyId, row.payee ?? '');
@@ -601,7 +608,12 @@ export class Gate {
           ],
           externalRef: p.itemId,
           idempotencyKey: `intent:${intentId}:sent`,
-          metadata: { intentId, payoutItemId: p.itemId, senderBatchId: intentId },
+          metadata: {
+            intentId,
+            payoutItemId: p.itemId,
+            senderBatchId: intentId,
+            ...(p.transactionId ? { paypalTransactionId: p.transactionId } : {}),
+          },
         },
         tx,
       );

@@ -92,3 +92,37 @@ Next: **Prompt 2 — Money constitution (interview first).**
 
 **Webhook URL to register:** `<PUBLIC_API_URL>/webhooks/paypal` — events listed in
 `packages/policy/src/webhooks.ts` (`PAYPAL_WEBHOOK_EVENTS`).
+
+## 2026-11-12 — Prompt 8: Reconciliation
+
+- `Reconciler` (packages/policy): Transaction Search for the window vs ledger entries (capture/refund/payout by PayPal
+  id; gross and fee, zero tolerance), status mismatches, open suspense, and the treasury vs PayPal balance at
+  PayPal's `as_of_time`. Writes `reconciliation_runs` and an alert per problem.
+- Lag handling: PayPal's `last_refreshed_datetime` is the coverage boundary; ledger items after it are `pending`
+  (mismatch only after 24h). With `--live`, pending items are fetched by id (capture/refund/payout item) and
+  compared to the cent (`verified_live`). Window starting after the last refresh: PayPal answers 404 "Data for the
+  given start date is not available" → treated as "no data yet". Observed lag in sandbox: ~2h (balance snapshot too).
+- `pnpm reconcile [--company] [--hours|--since] [--live] [--skip-balance]`; 11 tests (fixture per mismatch type).
+
+## 2026-11-12 — Prompt 9: Phase 1 exit test — PASS
+
+`pnpm loop:manual` against the PayPal sandbox (company `co_9ac65ecb3eca4020b8dea2fb054e3a07`):
+
+1. Founder funding $5,000.00 (sandbox business balance).
+2. Catalog product + PAY_NOW/NO_SHIPPING order with a buyer approval link; sandbox card capture $29.00 → fee $1.24,
+   net $27.76.
+3. Finance → Growth allocation $100.00 through the gate (auto-approved).
+4. Growth payouts to an allow-listed sandbox contractor: $5.00 auto-approved; $60.00 held (`approval_threshold`,
+   $61.00 reserved incl. fee buffer) and approved by the founder with `pnpm approvals approve <id>`. Real fee $0.25
+   each.
+5. No webhook registered (ingress tunnel blocked in the cloud session); reconciliation CLEAN: 3/3 movements
+   verified to the cent by id (`verified_live`), Transaction Search lagging ~2h. Final treasury $4,962.26 =
+   $5,000.00 + $27.76 − $65.50.
+
+Policy change during the loop: `holdFirstPayoutToNewPayee` now defaults to off — adding a payee to the allow-list is
+the founder's approval, and the playbook expects the first under-cap payout to auto-approve (constitution updated).
+
+**Phase 1 done.** Open: confirm the loop's 3 movements from Transaction Search after its refresh (scheduled
+re-check); register a webhook once there is a public URL (local tunnel or Render).
+
+Next: **Prompt 10 — Agent runtime core.**

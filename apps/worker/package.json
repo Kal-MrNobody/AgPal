@@ -9,7 +9,11 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "webhooks:pull": "node --env-file-if-exists=../../.env --import tsx scripts/pull-webhooks.ts"
+    "webhooks:pull": "node --env-file-if-exists=../../.env --import tsx scripts/pull-webhooks.ts",
+    "seed": "node --env-file-if-exists=../../.env --import tsx scripts/seed.ts",
+    "approvals": "node --env-file-if-exists=../../.env --import tsx scripts/approvals.ts",
+    "reconcile": "node --env-file-if-exists=../../.env --import tsx scripts/reconcile.ts",
+    "loop:manual": "node --env-file-if-exists=../../.env --import tsx scripts/loop-manual.ts"
   },
   "dependencies": {
     "@agpal/shared": "workspace:*",

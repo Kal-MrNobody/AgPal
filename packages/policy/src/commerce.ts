@@ -15,8 +15,55 @@ export class Commerce {
     private readonly paypal: Pick<
       PayPal,
       'createOrder' | 'captureOrder' | 'createAndCaptureSandboxCardOrder'
-    >,
+    > &
+      Partial<Pick<PayPal, 'createProduct' | 'createMonthlyPlan' | 'createSubscription'>>,
   ) {}
+
+  /** Create a catalog product (digital goods). */
+  async createProduct(
+    companyId: string,
+    name: string,
+    description?: string,
+  ): Promise<{ id: string; name: string }> {
+    if (!this.paypal.createProduct) throw new Error('catalog not available');
+    return this.paypal.createProduct({
+      name,
+      ...(description ? { description } : {}),
+      requestId: `product:${companyId}:${name}`,
+    });
+  }
+
+  /** Create a monthly subscription plan for a product. */
+  async createMonthlyPlan(
+    companyId: string,
+    productId: string,
+    name: string,
+    amountMinor: bigint,
+    currency: Currency,
+  ): Promise<{ id: string; status: string }> {
+    if (!this.paypal.createMonthlyPlan) throw new Error('plans not available');
+    return this.paypal.createMonthlyPlan({
+      productId,
+      name,
+      amountMinor,
+      currency,
+      requestId: `plan:${companyId}:${productId}:${name}:${amountMinor}`,
+    });
+  }
+
+  /** Start a subscription; the customer approves it at `approveUrl`. */
+  async createSubscription(
+    companyId: string,
+    planId: string,
+    reference: string,
+  ): Promise<{ id: string; status: string; approveUrl?: string }> {
+    if (!this.paypal.createSubscription) throw new Error('subscriptions not available');
+    return this.paypal.createSubscription({
+      planId,
+      customId: `agpal:${companyId}:${reference}`,
+      requestId: `sub:${companyId}:${reference}`,
+    });
+  }
 
   /** A checkout link for a customer (PAY_NOW, NO_SHIPPING). */
   createCheckout(i: {

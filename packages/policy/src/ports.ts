@@ -16,6 +16,8 @@ export interface PayoutRequest {
 export interface PayoutResult {
   batchId: string;
   itemId?: string;
+  /** The PayPal transaction id (what Transaction Search reports). */
+  transactionId?: string;
   /** PayPal transaction status of the item, e.g. SUCCESS, PENDING, UNCLAIMED. */
   itemStatus: string;
   /** Known once PayPal processed the item; undefined means "still pending". */

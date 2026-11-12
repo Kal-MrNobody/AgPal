@@ -18,7 +18,11 @@
     "webhook:tunnel": "pnpm --filter @agpal/api webhook:tunnel",
     "db:migrate": "pnpm --filter @agpal/db db:migrate",
     "webhooks:pull": "pnpm --filter @agpal/worker webhooks:pull",
-    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test",
+    "seed": "pnpm --silent --filter @agpal/worker seed",
+    "approvals": "pnpm --silent --filter @agpal/worker approvals",
+    "reconcile": "pnpm --silent --filter @agpal/worker reconcile",
+    "loop:manual": "pnpm --silent --filter @agpal/worker loop:manual"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

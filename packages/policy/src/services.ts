@@ -7,6 +7,7 @@ import { Gate } from './gate.js';
 import type { PayPalInbound } from './inbound.js';
 import { PayPalPayments } from './paypal-port.js';
 import { FakePayments, type PaymentsPort } from './ports.js';
+import { Reconciler } from './reconcile.js';
 import { WebhookProcessor } from './webhooks.js';
 
 export interface Services {
@@ -16,6 +17,7 @@ export interface Services {
   /** Read-only PayPal view (verification, search, balances). */
   inbound: PayPalInbound;
   webhooks: WebhookProcessor;
+  reconciler: Reconciler;
   /** True when payouts/refunds go to a fake provider (dry mode). */
   dry: boolean;
 }
@@ -56,5 +58,6 @@ export function createServices(
     paypal,
     opts.defaultCompanyId ? { defaultCompanyId: opts.defaultCompanyId } : {},
   );
-  return { ledger, gate, commerce, inbound, webhooks, dry: Boolean(opts.dry) };
+  const reconciler = new Reconciler(db, ledger, paypal);
+  return { ledger, gate, commerce, inbound, webhooks, reconciler, dry: Boolean(opts.dry) };
 }

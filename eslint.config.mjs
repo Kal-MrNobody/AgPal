@@ -76,6 +76,11 @@ export default tseslint.config(
     },
   },
   {
+    // CLI scripts print to stdout by design.
+    files: ['**/scripts/**/*.ts'],
+    rules: { 'no-console': 'off' },
+  },
+  {
     files: ['**/*.test.ts', '**/test-helpers.ts', '**/testing.ts'],
     rules: { '@typescript-eslint/require-await': 'off' },
   },

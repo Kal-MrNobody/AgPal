@@ -372,7 +372,11 @@ export class WebhookProcessor {
       if (item.feeMinor === undefined)
         throw new RetryLaterError(`Payout item ${item.itemId} has no fee yet`);
       if (intent.status === 'pending' || intent.status === 'failed') {
-        await this.gate.settlePayout(intent.id, { itemId: item.itemId, feeMinor: item.feeMinor });
+        await this.gate.settlePayout(intent.id, {
+          itemId: item.itemId,
+          feeMinor: item.feeMinor,
+          ...(item.transactionId ? { transactionId: item.transactionId } : {}),
+        });
       }
       if (status === 'UNCLAIMED') {
         await this.publish(

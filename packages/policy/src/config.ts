@@ -23,6 +23,7 @@ export const envelopeRulesSchema = z.object({
   payeePolicy: z.enum(['allowlist', 'original_order', 'none']),
   categories: z.array(z.string()).nullable(),
   alwaysHold: z.array(z.enum(spendActions)).default([]),
+  /** Off by default: adding a payee to the allow-list is the founder's approval of the relationship. */
   holdFirstPayoutToNewPayee: z.boolean().default(false),
 });
 
@@ -94,7 +95,6 @@ export const defaultPolicyConfig: PolicyConfigInput = {
       velocity: { max: 5, windowMinutes: 60 },
       payeePolicy: 'allowlist',
       categories: ['content', 'listings', 'launches', 'internal'],
-      holdFirstPayoutToNewPayee: true,
     },
   },
 };
