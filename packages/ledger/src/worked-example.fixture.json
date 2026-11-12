@@ -1,0 +1,549 @@
+[
+  {
+    "day": "Mon",
+    "label": "Founder funds the company $5,000.00",
+    "postings": [
+      ["cash:unallocated", 500000],
+      ["equity:owner", -500000]
+    ],
+    "balances": {
+      "cash:unallocated": 500000,
+      "equity:owner": -500000
+    }
+  },
+  {
+    "day": "Mon",
+    "label": "Finance allocates $300.00 to revenue",
+    "postings": [
+      ["cash:envelope:revenue", 30000],
+      ["cash:unallocated", -30000]
+    ],
+    "balances": {
+      "cash:unallocated": 470000,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 30000
+    }
+  },
+  {
+    "day": "Mon",
+    "label": "Finance allocates $100.00 to finance",
+    "postings": [
+      ["cash:envelope:finance", 10000],
+      ["cash:unallocated", -10000]
+    ],
+    "balances": {
+      "cash:unallocated": 460000,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 30000,
+      "cash:envelope:finance": 10000
+    }
+  },
+  {
+    "day": "Mon",
+    "label": "Finance allocates $200.00 to support",
+    "postings": [
+      ["cash:envelope:support", 20000],
+      ["cash:unallocated", -20000]
+    ],
+    "balances": {
+      "cash:unallocated": 440000,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 30000,
+      "cash:envelope:finance": 10000,
+      "cash:envelope:support": 20000
+    }
+  },
+  {
+    "day": "Mon",
+    "label": "Finance allocates $500.00 to growth",
+    "postings": [
+      ["cash:envelope:growth", 50000],
+      ["cash:unallocated", -50000]
+    ],
+    "balances": {
+      "cash:unallocated": 390000,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 30000,
+      "cash:envelope:finance": 10000,
+      "cash:envelope:support": 20000,
+      "cash:envelope:growth": 50000
+    }
+  },
+  {
+    "day": "Tue",
+    "label": "Capture Notion template $29.00 (fee 1.24)",
+    "postings": [
+      ["cash:unallocated", 2776],
+      ["expense:paypal_fees", 124],
+      ["revenue:sales:revenue", -2900]
+    ],
+    "balances": {
+      "cash:unallocated": 392776,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 30000,
+      "cash:envelope:finance": 10000,
+      "cash:envelope:support": 20000,
+      "cash:envelope:growth": 50000,
+      "expense:paypal_fees": 124,
+      "revenue:sales:revenue": -2900
+    }
+  },
+  {
+    "day": "Tue",
+    "label": "Capture Preset pack $49.00 (fee 1.76)",
+    "postings": [
+      ["cash:unallocated", 4724],
+      ["expense:paypal_fees", 176],
+      ["revenue:sales:revenue", -4900]
+    ],
+    "balances": {
+      "cash:unallocated": 397500,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 30000,
+      "cash:envelope:finance": 10000,
+      "cash:envelope:support": 20000,
+      "cash:envelope:growth": 50000,
+      "expense:paypal_fees": 300,
+      "revenue:sales:revenue": -7800
+    }
+  },
+  {
+    "day": "Tue",
+    "label": "AI usage revenue $0.50",
+    "postings": [
+      ["expense:ai_compute:revenue", 50],
+      ["liability:payable:ai_provider", -50],
+      ["cash:reserve:ai_compute", 50],
+      ["cash:envelope:revenue", -50]
+    ],
+    "balances": {
+      "cash:unallocated": 397500,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 10000,
+      "cash:envelope:support": 20000,
+      "cash:envelope:growth": 50000,
+      "expense:paypal_fees": 300,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -50,
+      "cash:reserve:ai_compute": 50
+    }
+  },
+  {
+    "day": "Tue",
+    "label": "AI usage finance $0.50",
+    "postings": [
+      ["expense:ai_compute:finance", 50],
+      ["liability:payable:ai_provider", -50],
+      ["cash:reserve:ai_compute", 50],
+      ["cash:envelope:finance", -50]
+    ],
+    "balances": {
+      "cash:unallocated": 397500,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 20000,
+      "cash:envelope:growth": 50000,
+      "expense:paypal_fees": 300,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -100,
+      "cash:reserve:ai_compute": 100,
+      "expense:ai_compute:finance": 50
+    }
+  },
+  {
+    "day": "Tue",
+    "label": "AI usage support $0.50",
+    "postings": [
+      ["expense:ai_compute:support", 50],
+      ["liability:payable:ai_provider", -50],
+      ["cash:reserve:ai_compute", 50],
+      ["cash:envelope:support", -50]
+    ],
+    "balances": {
+      "cash:unallocated": 397500,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 50000,
+      "expense:paypal_fees": 300,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -150,
+      "cash:reserve:ai_compute": 150,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50
+    }
+  },
+  {
+    "day": "Tue",
+    "label": "AI usage growth $0.50",
+    "postings": [
+      ["expense:ai_compute:growth", 50],
+      ["liability:payable:ai_provider", -50],
+      ["cash:reserve:ai_compute", 50],
+      ["cash:envelope:growth", -50]
+    ],
+    "balances": {
+      "cash:unallocated": 397500,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 49950,
+      "expense:paypal_fees": 300,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50
+    }
+  },
+  {
+    "day": "Wed",
+    "label": "Subscription payment #1 $9.00 (fee 0.72)",
+    "postings": [
+      ["cash:unallocated", 828],
+      ["expense:paypal_fees", 72],
+      ["revenue:subscriptions:revenue", -900]
+    ],
+    "balances": {
+      "cash:unallocated": 398328,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 49950,
+      "expense:paypal_fees": 372,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -900
+    }
+  },
+  {
+    "day": "Wed",
+    "label": "Subscription payment #2 $9.00 (fee 0.72)",
+    "postings": [
+      ["cash:unallocated", 828],
+      ["expense:paypal_fees", 72],
+      ["revenue:subscriptions:revenue", -900]
+    ],
+    "balances": {
+      "cash:unallocated": 399156,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 49950,
+      "expense:paypal_fees": 444,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -1800
+    }
+  },
+  {
+    "day": "Wed",
+    "label": "Subscription payment #3 $9.00 (fee 0.72)",
+    "postings": [
+      ["cash:unallocated", 828],
+      ["expense:paypal_fees", 72],
+      ["revenue:subscriptions:revenue", -900]
+    ],
+    "balances": {
+      "cash:unallocated": 399984,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 49950,
+      "expense:paypal_fees": 516,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700
+    }
+  },
+  {
+    "day": "Wed",
+    "label": "Growth payout approved: $40.00 to contractor A (auto)",
+    "postings": [
+      ["expense:contractors:growth", 4000],
+      ["liability:payable:contractor_a", -4000]
+    ],
+    "balances": {
+      "cash:unallocated": 399984,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 49950,
+      "expense:paypal_fees": 516,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 4000,
+      "liability:payable:contractor_a": -4000
+    }
+  },
+  {
+    "day": "Wed",
+    "label": "Payout sent (fee 0.80)",
+    "postings": [
+      ["liability:payable:contractor_a", 4000],
+      ["expense:paypal_fees", 80],
+      ["cash:envelope:growth", -4080]
+    ],
+    "balances": {
+      "cash:unallocated": 399984,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 29950,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 45870,
+      "expense:paypal_fees": 596,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 4000
+    }
+  },
+  {
+    "day": "Thu",
+    "label": "Internal invoice settled: Revenue -> Growth $25.00 listing rewrite",
+    "postings": [
+      ["expense:internal:growth", 2500],
+      ["revenue:internal:revenue", -2500],
+      ["cash:envelope:revenue", 2500],
+      ["cash:envelope:growth", -2500]
+    ],
+    "balances": {
+      "cash:unallocated": 399984,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 32450,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 43370,
+      "expense:paypal_fees": 596,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 4000,
+      "expense:internal:growth": 2500,
+      "revenue:internal:revenue": -2500
+    }
+  },
+  {
+    "day": "Fri",
+    "label": "Refund Notion template $29.00 (fee not returned)",
+    "postings": [
+      ["revenue:refunds:revenue", 2900],
+      ["cash:unallocated", -2900]
+    ],
+    "balances": {
+      "cash:unallocated": 397084,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 32450,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 43370,
+      "expense:paypal_fees": 596,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 4000,
+      "expense:internal:growth": 2500,
+      "revenue:internal:revenue": -2500,
+      "revenue:refunds:revenue": 2900
+    }
+  },
+  {
+    "day": "Sat",
+    "label": "Dispute opened on Preset pack $49.00",
+    "postings": [
+      ["cash:withheld:disputes", 4900],
+      ["cash:unallocated", -4900]
+    ],
+    "balances": {
+      "cash:unallocated": 392184,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 32450,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 43370,
+      "expense:paypal_fees": 596,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 4000,
+      "expense:internal:growth": 2500,
+      "revenue:internal:revenue": -2500,
+      "revenue:refunds:revenue": 2900,
+      "cash:withheld:disputes": 4900
+    }
+  },
+  {
+    "day": "Sat",
+    "label": "Growth payout $120.00 held -> founder approves",
+    "postings": [
+      ["expense:contractors:growth", 12000],
+      ["liability:payable:contractor_b", -12000]
+    ],
+    "balances": {
+      "cash:unallocated": 392184,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 32450,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 43370,
+      "expense:paypal_fees": 596,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 16000,
+      "expense:internal:growth": 2500,
+      "revenue:internal:revenue": -2500,
+      "revenue:refunds:revenue": 2900,
+      "cash:withheld:disputes": 4900,
+      "liability:payable:contractor_b": -12000
+    }
+  },
+  {
+    "day": "Sat",
+    "label": "Payout sent (fee 1.00)",
+    "postings": [
+      ["liability:payable:contractor_b", 12000],
+      ["expense:paypal_fees", 100],
+      ["cash:envelope:growth", -12100]
+    ],
+    "balances": {
+      "cash:unallocated": 392184,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 32450,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 31270,
+      "expense:paypal_fees": 696,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 16000,
+      "expense:internal:growth": 2500,
+      "revenue:internal:revenue": -2500,
+      "revenue:refunds:revenue": 2900,
+      "cash:withheld:disputes": 4900
+    }
+  },
+  {
+    "day": "Sun",
+    "label": "Dispute won: funds released",
+    "postings": [
+      ["cash:unallocated", 4900],
+      ["cash:withheld:disputes", -4900]
+    ],
+    "balances": {
+      "cash:unallocated": 397084,
+      "equity:owner": -500000,
+      "cash:envelope:revenue": 32450,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 31270,
+      "expense:paypal_fees": 696,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "liability:payable:ai_provider": -200,
+      "cash:reserve:ai_compute": 200,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 16000,
+      "expense:internal:growth": 2500,
+      "revenue:internal:revenue": -2500,
+      "revenue:refunds:revenue": 2900
+    }
+  },
+  {
+    "day": "Sun",
+    "label": "Founder pays OpenAI bill $2.00 by card outside PayPal",
+    "postings": [
+      ["liability:payable:ai_provider", 200],
+      ["equity:owner", -200],
+      ["cash:unallocated", 200],
+      ["cash:reserve:ai_compute", -200]
+    ],
+    "balances": {
+      "cash:unallocated": 397284,
+      "equity:owner": -500200,
+      "cash:envelope:revenue": 32450,
+      "cash:envelope:finance": 9950,
+      "cash:envelope:support": 19950,
+      "cash:envelope:growth": 31270,
+      "expense:paypal_fees": 696,
+      "revenue:sales:revenue": -7800,
+      "expense:ai_compute:revenue": 50,
+      "expense:ai_compute:finance": 50,
+      "expense:ai_compute:support": 50,
+      "expense:ai_compute:growth": 50,
+      "revenue:subscriptions:revenue": -2700,
+      "expense:contractors:growth": 16000,
+      "expense:internal:growth": 2500,
+      "revenue:internal:revenue": -2500,
+      "revenue:refunds:revenue": 2900
+    }
+  }
+]

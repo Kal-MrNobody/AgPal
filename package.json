@@ -1,0 +1,34 @@
+{
+  "name": "agpal",
+  "private": true,
+  "packageManager": "pnpm@12.18.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:up": "docker compose up -d --wait postgres",
+    "db:down": "docker compose down",
+    "webhook:tunnel": "pnpm --filter @agpal/api webhook:tunnel",
+    "db:migrate": "pnpm --filter @agpal/db db:migrate",
+    "webhooks:pull": "pnpm --filter @agpal/worker webhooks:pull",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "26.6.6",
+    "eslint": "10.14.0",
+    "prettier": "3.10.1",
+    "tsx": "4.23.15",
+    "turbo": "2.11.11",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vitest": "5.1.0"
+  }
+}

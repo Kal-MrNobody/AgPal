@@ -1,0 +1,38 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: agpal
+          POSTGRES_PASSWORD: agpal
+          POSTGRES_DB: agpal
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U agpal -d agpal" --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      DATABASE_URL: postgres://agpal:agpal@localhost:5432/agpal
+    steps:
+      - uses: actions/checkout@v5
+      # pnpm must exist before setup-node: v5 enables pnpm caching from package.json#packageManager.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm test
