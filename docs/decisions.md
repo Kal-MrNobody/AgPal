@@ -113,3 +113,53 @@ trial mode. All schedule changes go through `ScheduleService.apply()` on the ser
 the browser Gantt loads computed dates via CrudManager and never reschedules (`manuallyScheduled`, read-only). The
 browser-recalculate-then-sync fallback described in the playbook was therefore not built; `schedule_tasks.confirmed`
 exists for it. Scheduler Pro 8 is not published on public npm, so the agents' timeline uses Scheduler Enterprise 8.
+
+## ADR-016: Claude Code never reads `.env` / `.env.*` (2026-11-12) — invariant
+
+Decision (sponsor-feedback playbook revision): Claude Code must never read `.env` or `.env.*`. `.claude/settings.json`
+denies those reads; scripts and apps still load them at runtime (`node --env-file-if-exists`, `loadEnv()`).
+Reason: the files hold live credentials; an assistant that cannot read them cannot leak them into a transcript, a
+commit or a model provider. Runtime loading keeps local development unchanged. Recorded as invariant 8 in `CLAUDE.md`.
+
+## ADR-017: PayPal integration is built on the Server SDK via the Context Plugin skills (2026-11-12)
+
+Decision: build on the PayPal Server SDK (TypeScript) using the Context Plugin's `typescript-*` skills
+(getting-started, authentication, client-initialization, configuration-resilience, calling-endpoints,
+error-handling, models, testing). Every SDK fact we rely on is recorded in `docs/apimatic-plugin.md`.
+Reason: the SDK gives typed models, auth and retries maintained by PayPal/APIMatic, which is what the sponsor wants
+judged. The plugin is a hackathon preview that may disappear, so the facts must live in our repo, not in the plugin.
+
+## ADR-018: Bryntum — server-side schedule tool, payment milestones, headless recalculation in the worker (2026-11-12)
+
+Decision (advice from Bryntum's team):
+
+- No WebMCP. Agents never touch the UI; they change the plan through **one** server-side schedule tool that writes to
+  our database with an audit entry.
+- Each expected payment is a zero-duration milestone task ("Payment received: INV-123") linked to the milestone it
+  gates by a Finish-to-Start dependency. The expected date is a `startnoearlierthan` constraint; settlement delay is
+  the dependency's lag. When a payment slips, only that `constraintDate` changes and the engine reschedules
+  downstream.
+- Recalculation runs headless in `apps/worker` with Bryntum's Node bundle (`gantt.node.mjs`); the browser only
+  displays computed dates via CrudManager.
+- Fallback: if the Node bundle will not load with the trial key, recalculate in the browser and flag downstream
+  dates as unconfirmed.
+  Reason: keeps every plan change attributable and server-authoritative, models cash timing with native engine
+  features (constraints + lag) rather than custom date math, and keeps the browser a pure display. Supersedes the parts
+  of ADR-015 that conflict.
+
+## ADR-019: AG Studio — built-in lead agent delegates to a read-only CFO agent; gate re-checks card actions (2026-11-12)
+
+Decision (advice from AG Grid's team): the Boardroom CFO starts from the Studio Agent Framework's **built-in lead
+agent**, with the CFO registered as a custom agent with read-only ledger tools. Our own lead agent is only a fallback
+if the built-in lead cannot delegate to custom agents in 3.1. The Approval card is a custom widget whose actions are
+re-checked by the gate on the server.
+Reason: use the framework as designed (judged on AG Studio usage) and keep a hand-written lead only where 3.1 forces
+it; a widget button is UI, so authority must stay in the server-side gate.
+
+## ADR-020: AG Studio — signature "Money flow" Sankey and a distinctive theme (2026-11-12)
+
+Decision: the boardroom gets a signature "Money flow" widget: a Sankey from customers → treasury → department
+envelopes → payees, with internal invoices as their own flows. The boardroom uses a distinctive theme instead of
+default styling.
+Reason: sponsor feedback on creativity; a Sankey shows the company's money story at a glance, straight from the
+double-entry ledger.

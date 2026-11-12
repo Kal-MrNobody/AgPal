@@ -29,6 +29,8 @@ Read at the start of every session: this file, `docs/money-constitution.md`, `do
    redact auth headers.
 7. **Every agent action is attributable:** agent id, run id, reason (`Attribution` in
    `@agpal/shared`).
+8. **Claude Code never reads `.env` or `.env.*`.** `.claude/settings.json` denies it; scripts and apps still load
+   them at runtime (`--env-file-if-exists`, `loadEnv()`). (ADR-016)
 
 ## Stack
 
