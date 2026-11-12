@@ -22,6 +22,17 @@ export async function decideApproval(
   return r;
 }
 
+/** Resolve an open alert with the founder's reason (audited on the server; moves no money). */
+export async function resolveAlert(alertId: string, note: string): Promise<{ status: string }> {
+  if (!/^alr_[a-f0-9]{32}$/.test(alertId)) throw new Error('bad id');
+  const r = await api<{ status: string }>(`/api/alerts/${alertId}/resolve`, {
+    method: 'POST',
+    body: { note: note.slice(0, 500) },
+  });
+  revalidatePath('/', 'layout');
+  return r;
+}
+
 /** Batch-approve every held spend at or under `maxDollars` (each re-checked by the gate). */
 export async function batchApprove(
   maxDollars: number,

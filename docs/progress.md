@@ -350,3 +350,13 @@ Company `co_9ac65ecb3eca4020b8dea2fb054e3a07`, window 11:54:06–11:58:00 UTC, a
 - Found: moving the payment **back** to 11-15 changed nothing. The plan's project start came from the current
   earliest date (11-18 after the slip), so the engine pinned the earlier constraint to it. Fixed in `recalculate`
   (project start ≤ every changed date), with a regression test that fails on the old code.
+
+## 2026-11-12 — Demo prep: resolve alerts, held payout, demo script
+
+- Founder can resolve an open alert with a written reason: `POST /api/alerts/:id/resolve` (founder-only, reason
+  required, once, audited as `alert.resolved`; moves no money), shown as the **Alert cards** widget on the Overview
+  (replaces the plain alerts grid). DB test + clicked through in the browser.
+- `pnpm demo:hold`: through the gate, a $100 Finance allocation to Growth (within policy) and a $90 contractor
+  payout that is held for the founder (`approval_threshold`); attributed to `demo-setup`.
+- `docs/demo-script.md` rewritten for what is live: Money flow, held payout, "Delegated to CFO", worker schedule
+  recalculation, suspense and resolve.

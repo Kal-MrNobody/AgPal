@@ -263,7 +263,7 @@ const pages: Record<PageId, AgPageState<BoardroomRegistry>> = {
         },
         format: title('Revenue vs AI cost and net, by department'),
       },
-      alertsGrid: grid('Alerts', ['alerts.kind', 'alerts.severity', 'alerts.message', 'alerts.at']),
+      alertCards: { type: 'alertCard', dataMapping: {}, format: title('Alerts') },
     },
     widgetLayout: {
       cash: at(0, 0, 4, 6),
@@ -274,7 +274,7 @@ const pages: Record<PageId, AgPageState<BoardroomRegistry>> = {
       runway: at(20, 0, 4, 6),
       moneyFlow: at(0, 6, 24, 18),
       revVsAi: at(0, 24, 14, 14),
-      alertsGrid: at(14, 24, 10, 14),
+      alertCards: at(14, 24, 10, 14),
     },
   },
   departments: {

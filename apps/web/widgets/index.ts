@@ -3,6 +3,7 @@ import AgentScorecard from './agent-scorecard';
 import ApprovalCard from './approval-card';
 import EnvelopeGauge from './envelope-gauge';
 import LedgerGrid from './ledger-grid';
+import AlertCard from './alert-card';
 import MoneyFlow from './money-flow';
 import type { BoardroomRegistry } from './registry';
 
@@ -59,6 +60,18 @@ export const boardroomWidgets = () =>
         },
       },
       {
+        id: 'alertCard',
+        label: 'Alert cards',
+        form: (params) => params.createDefaults({ dataMappingItems: [] }),
+        comp: AlertCard,
+        defaultSize: { width: 520, height: 320 },
+        minSize: { width: 280, height: 180 },
+        ai: {
+          description:
+            'Open alerts (suspense, reconciliation, failed payouts). The founder can resolve one with a written, audited reason.',
+        },
+      },
+      {
         id: 'approvalCard',
         label: 'Approval cards',
         form: (params) => params.createDefaults({ dataMappingItems: [] }),
@@ -95,7 +108,14 @@ export const boardroomWidgets = () =>
     menu: [
       {
         label: 'AgPal',
-        widgetIds: ['moneyFlow', 'envelopeGauge', 'approvalCard', 'agentScorecard', 'ledgerGrid'],
+        widgetIds: [
+          'moneyFlow',
+          'alertCard',
+          'envelopeGauge',
+          'approvalCard',
+          'agentScorecard',
+          'ledgerGrid',
+        ],
       },
     ],
   });

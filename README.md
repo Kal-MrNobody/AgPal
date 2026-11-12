@@ -115,7 +115,7 @@ How we used the APIMatic-generated PayPal Server SDK and where we went to thin R
 
 ## More
 
-- Demo script: [docs/demo-script.md](docs/demo-script.md) · Deploy to Render: [docs/deploy.md](docs/deploy.md) ·
+- Demo script (3 min, prep steps included): [docs/demo-script.md](docs/demo-script.md) · Deploy to Render: [docs/deploy.md](docs/deploy.md) ·
   Runbook: [docs/runbook.md](docs/runbook.md) · Department mandates: [docs/departments/](docs/departments/)
 - Stack: pnpm workspaces + Turborepo, TypeScript strict, Next.js 16, Fastify 5, pg-boss, Drizzle + Postgres 17,
   Vitest, PayPal Server SDK, OpenAI Responses API.
