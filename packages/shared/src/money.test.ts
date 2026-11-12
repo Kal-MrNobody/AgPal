@@ -12,7 +12,7 @@ import {
   sum,
   toDecimal,
   toJson,
-} from './money.js';
+} from './money';
 
 describe('money', () => {
   it('parses PayPal decimal strings into minor units', () => {

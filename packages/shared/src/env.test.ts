@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EnvError, loadEnv } from './env.js';
+import { EnvError, loadEnv } from './env';
 
 const base = {
   DATABASE_URL: 'postgres://agpal:agpal@localhost:5432/agpal',

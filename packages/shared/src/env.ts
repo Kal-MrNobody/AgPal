@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Secret } from './secret.js';
+import { Secret } from './secret';
 
 const secret = z
   .string()

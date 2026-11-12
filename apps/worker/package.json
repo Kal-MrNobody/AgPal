@@ -15,7 +15,8 @@
     "reconcile": "node --env-file-if-exists=../../.env --import tsx scripts/reconcile.ts",
     "loop:manual": "node --env-file-if-exists=../../.env --import tsx scripts/loop-manual.ts",
     "agent:run": "node --env-file-if-exists=../../.env --import tsx scripts/agent-run.ts",
-    "sim:week": "node --env-file-if-exists=../../.env --import tsx scripts/sim-week.ts"
+    "sim:week": "node --env-file-if-exists=../../.env --import tsx scripts/sim-week.ts",
+    "founder:link": "node --env-file-if-exists=../../.env --import tsx scripts/founder-link.ts"
   },
   "dependencies": {
     "@agpal/shared": "workspace:*",

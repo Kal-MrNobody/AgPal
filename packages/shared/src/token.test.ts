@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { signToken, verifyToken } from './token.js';
+import { signToken, verifyToken } from './token';
 
 describe('signed tokens', () => {
   const exp = Math.floor(Date.now() / 1000) + 60;

@@ -1,6 +1,6 @@
 import { inspect } from 'node:util';
 import { describe, expect, it } from 'vitest';
-import { Secret } from './secret.js';
+import { Secret } from './secret';
 
 describe('Secret', () => {
   const s = new Secret('sk-very-secret');

@@ -184,3 +184,17 @@ Next: **Prompt 10 — Agent runtime core.**
   `https.request` patched to fail and asserts zero calls.
 
 **Phase 3 done.** Next: Phase 4 (boardroom).
+
+## 2026-11-12 — Prompt 17: Boardroom app and AG Studio base
+
+- `apps/api`: founder endpoints behind a server-to-server admin token (`x-agpal-admin`, constant-time compare):
+  `GET /api/boardroom` (ledger postings, envelopes, P&L per department, agents, runs, intents, approvals,
+  reconciliation runs, alerts, overview), `POST /api/approvals/:id/approve|reject` (gate re-checks deny rules),
+  `POST /api/kill-switch`.
+- `apps/web`: single-founder login via signed magic link (`pnpm founder:link`, 15 min; HMAC session cookie, httpOnly);
+  AG Studio 3.1 (`ag-studio-react`, AG Grid + AG Charts Enterprise, no licence key → watermark) with pages Overview,
+  Departments, Approvals, Ledger, Agents, Reconciliation; data from apps/api via server actions (no keys in the
+  browser); live updates every 15 s as AG Studio transactions (`primaryKeyField` + `applyTransaction`), no remount;
+  approval cards with approve/deny + note.
+- Rendered against the simulated week (screens in `docs/screens/`).
+- Fix: `packages/shared` uses extensionless relative imports so Next's Turbopack can transpile it.
