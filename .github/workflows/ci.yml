@@ -13,13 +13,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
+      # pnpm must exist before setup-node: v5 enables pnpm caching from package.json#packageManager.
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with:
           node-version-file: .nvmrc
-      - run: corepack enable
+          cache: pnpm
       - run: pnpm install --frozen-lockfile
-        env:
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm format:check
