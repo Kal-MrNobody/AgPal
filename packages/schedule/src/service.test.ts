@@ -123,4 +123,37 @@ describe.runIf(hasDb)('ScheduleService (server-side recalculation, no browser)',
         .slice(0, 10),
     ).toBe('2026-11-26');
   });
+
+  it('a payment can move back earlier after a slip (project start follows the change)', async () => {
+    const svc = new ScheduleService(t.db);
+    const co = 'co_back';
+    await svc.seedDemo(co, new Date('2026-11-16T00:00:00Z'));
+    const rows = await t.db.select().from(scheduleTasks).where(eq(scheduleTasks.companyId, co));
+    const payment = rows.find((x) => x.ref === 'INV-1042');
+    const launch = rows.find((x) => x.name.startsWith('Launch'));
+    const by = { kind: 'founder' as const, reason: 'test' };
+    await svc.apply(
+      co,
+      { kind: 'shift_payment', taskId: payment?.id ?? '', newDate: '2026-11-24' },
+      by,
+    );
+    await svc.apply(
+      co,
+      { kind: 'shift_payment', taskId: payment?.id ?? '', newDate: '2026-11-19' },
+      by,
+    );
+    const after = await t.db.select().from(scheduleTasks).where(eq(scheduleTasks.companyId, co));
+    expect(
+      after
+        .find((x) => x.id === payment?.id)
+        ?.startDate?.toISOString()
+        .slice(0, 10),
+    ).toBe('2026-11-19');
+    expect(
+      after
+        .find((x) => x.id === launch?.id)
+        ?.startDate?.toISOString()
+        .slice(0, 10),
+    ).toBe('2026-11-21');
+  });
 });
