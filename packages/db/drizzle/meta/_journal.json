@@ -43,6 +43,13 @@
       "when": 1794487200739,
       "tag": "0005_catalog_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794489995942,
+      "tag": "0006_schedule",
+      "breakpoints": true
     }
   ]
 }

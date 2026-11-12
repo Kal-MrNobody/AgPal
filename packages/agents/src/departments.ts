@@ -74,6 +74,9 @@ export const DEPARTMENT_AGENTS: Omit<AgentDefinition, 'id'>[] = [
       'propose_policy_change',
       'accept_internal_invoice',
       'dispute_internal_invoice',
+      'view_schedule',
+      'shift_expected_payment',
+      'mark_payment_received',
     ],
   },
   {

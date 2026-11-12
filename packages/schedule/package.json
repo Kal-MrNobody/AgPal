@@ -1,0 +1,22 @@
+{
+  "name": "@agpal/schedule",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agpal/db": "workspace:*",
+    "@agpal/shared": "workspace:*",
+    "drizzle-orm": "0.45.4",
+    "@bryntum/gantt-enterprise": "8.0.1",
+    "@bryntum/core-enterprise": "8.0.1",
+    "@bryntum/engine-enterprise": "8.0.1"
+  }
+}

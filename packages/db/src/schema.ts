@@ -546,3 +546,43 @@ export const orders = pgTable(
     index('orders_company').on(t.companyId, t.createdAt),
   ],
 );
+
+/**
+ * Company plan for the Bryntum time views (Prompt 20). Payment milestones are zero-duration tasks whose expected date
+ * is a startnoearlierthan constraint; dates are always computed by the engine on the server.
+ */
+export const scheduleTasks = pgTable(
+  'schedule_tasks',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    name: text('name').notNull(),
+    /** payment | milestone | task */
+    kind: text('kind').notNull(),
+    durationDays: integer('duration_days').notNull().default(0),
+    constraintDate: timestamp('constraint_date', { withTimezone: true }),
+    percentDone: integer('percent_done').notNull().default(0),
+    /** Invoice, payout or task this item tracks. */
+    ref: text('ref'),
+    startDate: timestamp('start_date', { withTimezone: true }),
+    endDate: timestamp('end_date', { withTimezone: true }),
+    /** False when dates came from a browser fallback and await the next server recalculation. */
+    confirmed: boolean('confirmed').notNull().default(true),
+    sortOrder: integer('sort_order').notNull().default(0),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('schedule_tasks_company').on(t.companyId)],
+);
+
+/** Finish-to-Start links between plan tasks; settlement delay is the lag. */
+export const scheduleDependencies = pgTable(
+  'schedule_dependencies',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    fromTask: text('from_task').notNull(),
+    toTask: text('to_task').notNull(),
+    lagDays: integer('lag_days').notNull().default(0),
+  },
+  (t) => [index('schedule_deps_company').on(t.companyId)],
+);

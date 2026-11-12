@@ -25,7 +25,8 @@
     "loop:manual": "pnpm --silent --filter @agpal/worker loop:manual",
     "agent:run": "pnpm --silent --filter @agpal/worker agent:run",
     "sim:week": "pnpm --silent --filter @agpal/worker sim:week",
-    "founder:link": "pnpm --silent --filter @agpal/worker founder:link"
+    "founder:link": "pnpm --silent --filter @agpal/worker founder:link",
+    "schedule:seed": "pnpm --silent --filter @agpal/worker schedule:seed"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

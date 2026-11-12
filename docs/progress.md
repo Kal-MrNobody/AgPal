@@ -229,3 +229,17 @@ Next: **Prompt 10 — Agent runtime core.**
 - Verified live: "Why did Growth overspend?" answered from real data (payout $50 + fee, $100 held at
   `approval_threshold`, two `category.not_allowed` denials, $28.68 available) and offered a draft
   (`docs/screens/cfo-why-growth-overspent.png`).
+
+## 2026-11-12 — Prompt 20: Bryntum time views
+
+- **Headless engine verified** in Node with `@bryntum/gantt-enterprise@8.0.1` (trial, no key): see
+  `docs/bryntum-headless.md` and `examples/bryntum-headless/`.
+- `packages/schedule`: `recalculate()` + `ScheduleService` (one server path; dates + audit in one transaction);
+  `schedule_tasks` / `schedule_dependencies` tables; agent tools `view_schedule`, `shift_expected_payment`,
+  `mark_payment_received` (Finance); API `GET /api/schedule` (CrudManager load), `POST /api/schedule/change`.
+- Boardroom **Schedule** page: Bryntum Gantt (server dates only) with a slip/received form going through the server;
+  Scheduler with one row per agent (runs, assigned tasks, dispute work blocks; unstaffed disputes highlighted in red;
+  expected payouts and subscription renewals as markers).
+- Stop condition met: changing one payment's `constraintDate` with no browser open recalculates every dependent
+  milestone on the server (tests), the Gantt shows exactly the server's dates (verified in the UI: INV-1042 slipped
+  to Nov 22 → launch Nov 24, contractor Nov 27, Q1 allocation Nov 28), and the change is in the audit trail.

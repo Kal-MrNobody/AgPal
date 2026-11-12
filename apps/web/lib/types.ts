@@ -2,6 +2,23 @@
 export interface BoardroomData {
   asOf: string;
   companyId: string;
+  disputes: {
+    disputeId: string;
+    openedAt: string;
+    dueDate: string;
+    amount: number;
+    worked: boolean;
+  }[];
+  tasks: {
+    taskId: string;
+    title: string;
+    from: string;
+    to: string;
+    status: string;
+    createdAt: string;
+    deadline: string;
+    budget: number;
+  }[];
   overview: {
     cash: number;
     unallocated: number;
@@ -131,4 +148,7 @@ export const PAGES = [
   { id: 'agents', title: 'Agents' },
   { id: 'reconciliation', title: 'Reconciliation' },
 ] as const;
+
+/** Non-Studio pages in the nav. */
+export const EXTRA_PAGES = [{ id: 'schedule', title: 'Schedule' }] as const;
 export type PageId = (typeof PAGES)[number]['id'];

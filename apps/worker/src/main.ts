@@ -5,6 +5,7 @@ import { agents, createDb } from '@agpal/db';
 import { createServices } from '@agpal/policy';
 import { loadEnv } from '@agpal/shared';
 import { QUEUES, WEBHOOK_RETRY_LIMIT } from './queues.js';
+import { scheduleTools } from './schedule-tools.js';
 import { handleWebhookJob } from './webhook-job.js';
 
 const env = loadEnv();
@@ -14,11 +15,10 @@ const services = createServices(
   env,
   env.AGPAL_COMPANY_ID ? { defaultCompanyId: env.AGPAL_COMPANY_ID } : {},
 );
-const { runtime } = createAgentRuntime(
-  db,
-  services,
-  env.OPENAI_API_KEY ? { openaiApiKey: env.OPENAI_API_KEY.reveal() } : {},
-);
+const { runtime } = createAgentRuntime(db, services, {
+  extraTools: scheduleTools,
+  ...(env.OPENAI_API_KEY ? { openaiApiKey: env.OPENAI_API_KEY.reveal() } : {}),
+});
 const boss = new PgBoss(env.DATABASE_URL.reveal());
 boss.on('error', (err: unknown) => {
   console.error('pg-boss error', err instanceof Error ? err.message : 'unknown');

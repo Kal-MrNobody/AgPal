@@ -1,0 +1,11 @@
+{
+  "name": "bryntum-headless-payment-milestone",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "dependencies": {
+    "@bryntum/gantt-enterprise": "8.0.1"
+  }
+}

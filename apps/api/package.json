@@ -18,6 +18,7 @@
     "fastify": "5.12.8",
     "@agpal/ledger": "workspace:*",
     "pg-boss": "12.38.2",
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "@agpal/schedule": "workspace:*"
   }
 }

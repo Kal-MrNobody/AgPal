@@ -4,6 +4,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import {
   agentControls,
+  domainEvents,
+  tasks as taskTable,
   agentRuns,
   agents,
   alerts,
@@ -13,6 +15,7 @@ import {
   type Database,
 } from '@agpal/db';
 import { trustRecord, type Services } from '@agpal/policy';
+import { ScheduleService } from '@agpal/schedule';
 
 export interface RouteDeps {
   db: Database;
@@ -95,6 +98,44 @@ export function registerReadRoutes(app: FastifyInstance, deps: RouteDeps): void 
     await deps.services.gate.setKillSwitch(co, req.body.on, 'founder');
     return { killSwitch: req.body.on };
   });
+  // ── Bryntum time views: the browser only displays the server's computed dates ──────────────────
+  app.get('/api/schedule', async (req, reply) => {
+    const co = await guard(req, reply);
+    if (!co) return reply;
+    return new ScheduleService(deps.db).crudLoad(co);
+  });
+  /** Edits from the browser Gantt go through the same server path as agents (engine recalculates on the server). */
+  app.post<{
+    Body: { taskId: string; constraintDate?: string; receivedOn?: string; reason?: string };
+  }>('/api/schedule/change', async (req, reply) => {
+    const co = await guard(req, reply);
+    if (!co) return reply;
+    const b = req.body;
+    const change = b.receivedOn
+      ? { kind: 'mark_received' as const, taskId: b.taskId, receivedAt: b.receivedOn.slice(0, 10) }
+      : {
+          kind: 'shift_payment' as const,
+          taskId: b.taskId,
+          newDate: (b.constraintDate ?? '').slice(0, 10),
+        };
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(
+        change.kind === 'mark_received' ? change.receivedAt : change.newDate,
+      )
+    )
+      return reply.code(400).send({ error: 'date required' });
+    const svc = new ScheduleService(deps.db);
+    try {
+      await svc.apply(co, change, {
+        kind: 'founder',
+        reason: b.reason ?? 'edited in the boardroom Gantt',
+      });
+    } catch (e) {
+      return reply.code(400).send({ error: e instanceof Error ? e.message : 'invalid change' });
+    }
+    return svc.crudLoad(co);
+  });
+
   // ── Boardroom CFO (AG Studio Agent Framework) ───────────────────────────────────────────────────
   /** LLM proxy for the in-browser Studio agents: the key stays on the server; models are allow-listed. */
   app.post('/api/ai/responses', async (req, reply) => {
@@ -376,9 +417,45 @@ export async function boardroomData(deps: RouteDeps, co: string) {
     0,
   );
 
+  // Time views: disputes (with whether Support has worked on them), open commissioned tasks.
+  const disputeEvents = await db
+    .select()
+    .from(domainEvents)
+    .where(and(eq(domainEvents.companyId, co), eq(domainEvents.name, 'dispute.opened')));
+  const supportRuns = runs.filter(
+    (r) => staff.find((a) => a.id === r.agentId)?.department === 'support',
+  );
+  const disputes = disputeEvents.map((e) => {
+    const p = e.payload as { disputeId?: string; dueDate?: string; amountMinor?: string };
+    const worked = supportRuns.some(
+      (r) =>
+        r.startedAt > e.createdAt &&
+        r.toolCalls.some((c) => ((c as { name?: string }).name ?? '').includes('dispute')),
+    );
+    return {
+      disputeId: p.disputeId ?? e.id,
+      openedAt: e.createdAt.toISOString(),
+      dueDate: p.dueDate ?? '',
+      amount: usd(p.amountMinor),
+      worked,
+    };
+  });
+  const openTasks = await db.select().from(taskTable).where(eq(taskTable.companyId, co));
+
   return {
     asOf: new Date().toISOString(),
     companyId: co,
+    disputes,
+    tasks: openTasks.map((t) => ({
+      taskId: t.id,
+      title: t.title,
+      from: t.fromDepartment,
+      to: t.contractorEmail ?? t.toDepartment,
+      status: t.status,
+      createdAt: t.createdAt.toISOString(),
+      deadline: t.deadline?.toISOString() ?? '',
+      budget: usd(t.budgetMinor),
+    })),
     overview: [
       {
         cash,

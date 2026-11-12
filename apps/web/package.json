@@ -21,7 +21,14 @@
     "server-only": "0.0.1",
     "ag-grid-react": "36.3.0",
     "ag-grid-enterprise": "36.3.0",
-    "ag-grid-community": "36.3.0"
+    "ag-grid-community": "36.3.0",
+    "@bryntum/gantt-enterprise": "8.0.1",
+    "@bryntum/gantt-react-enterprise": "8.0.1",
+    "@bryntum/scheduler-enterprise": "8.0.1",
+    "@bryntum/scheduler-react-enterprise": "8.0.1",
+    "@bryntum/core-enterprise": "8.0.1",
+    "@bryntum/grid-enterprise": "8.0.1",
+    "@bryntum/engine-enterprise": "8.0.1"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

@@ -10,6 +10,15 @@ minimumReleaseAgeExclude:
   - '@turbo/windows-arm64@2.11.11'
   - prettier@3.10.1
   - turbo@2.11.11
+  - '@bryntum/core-enterprise@8.0.1'
+  - '@bryntum/engine-enterprise@8.0.1'
+  - '@bryntum/gantt-enterprise@8.0.1'
+  - '@bryntum/grid-enterprise@8.0.1'
+  - '@bryntum/scheduler-enterprise@8.0.1'
+  - '@bryntum/core-react-enterprise@8.0.1'
+  - '@bryntum/gantt-react-enterprise@8.0.1'
+  - '@bryntum/grid-react-enterprise@8.0.1'
+  - '@bryntum/scheduler-react-enterprise@8.0.1'
 
 # pnpm blocks dependency build scripts by default; only these may run.
 allowBuilds:
