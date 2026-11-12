@@ -22,7 +22,8 @@
     "seed": "pnpm --silent --filter @agpal/worker seed",
     "approvals": "pnpm --silent --filter @agpal/worker approvals",
     "reconcile": "pnpm --silent --filter @agpal/worker reconcile",
-    "loop:manual": "pnpm --silent --filter @agpal/worker loop:manual"
+    "loop:manual": "pnpm --silent --filter @agpal/worker loop:manual",
+    "agent:run": "pnpm --silent --filter @agpal/worker agent:run"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

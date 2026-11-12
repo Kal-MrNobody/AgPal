@@ -369,3 +369,57 @@ export const reconciliationRuns = pgTable(
   },
   (t) => [index('reconciliation_runs_company').on(t.companyId, t.createdAt)],
 );
+
+/** Agent definitions per company (Prompt 10). Mandate and tool allow-list are data; policy rules are not. */
+export const agents = pgTable(
+  'agents',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id')
+      .notNull()
+      .references(() => companies.id),
+    department: text('department').notNull(),
+    title: text('title').notNull(),
+    mandate: text('mandate').notNull(),
+    modelTier: text('model_tier').notNull(),
+    heartbeatCron: text('heartbeat_cron').notNull(),
+    envelope: text('envelope').notNull(),
+    tools: jsonb('tools').$type<string[]>().notNull(),
+    reportsTo: text('reports_to').notNull().default('founder'),
+    /** active | idle (no budget) */
+    status: text('status').notNull().default('active'),
+    /** Domain events up to here have been delivered to the agent's inbox. */
+    inboxCursor: timestamp('inbox_cursor', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('agents_company').on(t.companyId)],
+);
+
+/** One record per agent run: inputs, tool calls, outputs, a reasoning summary and the cost (invariant 7). */
+export const agentRuns = pgTable(
+  'agent_runs',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    agentId: text('agent_id').notNull(),
+    trigger: text('trigger').notNull(),
+    /** running | completed | failed | skipped_no_budget | skipped_paused */
+    status: text('status').notNull(),
+    model: text('model'),
+    inputs: jsonb('inputs').$type<Record<string, unknown>>().notNull().default({}),
+    toolCalls: jsonb('tool_calls').$type<Record<string, unknown>[]>().notNull().default([]),
+    output: text('output'),
+    summary: text('summary'),
+    inputTokens: integer('input_tokens').notNull().default(0),
+    outputTokens: integer('output_tokens').notNull().default(0),
+    /** Exact model cost in micro-dollars; the ledger books it rounded up to the cent. */
+    costMicros: bigint('cost_micros', { mode: 'bigint' })
+      .notNull()
+      .default(sql`0`),
+    costEntryId: text('cost_entry_id'),
+    error: text('error'),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [index('agent_runs_agent').on(t.companyId, t.agentId, t.startedAt)],
+);

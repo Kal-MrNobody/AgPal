@@ -126,3 +126,19 @@ the founder's approval, and the playbook expects the first under-cap payout to a
 re-check); register a webhook once there is a public URL (local tunnel or Render).
 
 Next: **Prompt 10 — Agent runtime core.**
+
+## 2026-11-12 — Prompt 10: Agent runtime core
+
+- `packages/agents`: `AgentDefinition`/`agents` table, model config (tiers, model names and µ$-per-token prices in
+  config, `AGPAL_MODELS_JSON`), `ModelProvider` with `OpenAIProvider` (Responses API, function tools,
+  `previous_response_id`) and `ScriptedProvider` (deterministic test mode), zod-validated tools (`get_envelope`,
+  `request_payout`, `request_allocation`, `request_refund` — money tools only create SpendIntents), `AgentRuntime`.
+- A run: kill switches → envelope must cover the tier's max run cost (else idle + `envelope.low` to Finance) →
+  hold that max → inbox (domain events as untrusted data) + envelope + last 5 summaries → plan/tool loop with an
+  allow-list and a budget guard → AI cost booked per constitution §2.8 by converting the hold (rounded up to the cent)
+  → `agent_runs` record (inputs, tool calls, output, summary, tokens, cost, entry id).
+- Worker: per-agent pg-boss heartbeat schedules, nightly reconciliation; `pnpm agent:run <id>`.
+- Verified the Responses API tool-call shape with a real gpt-5-mini call. In this cloud environment Node needs
+  `NODE_USE_ENV_PROXY=1` so OpenAI calls go through the key-injecting proxy.
+- Tests (5): heartbeat run reads its inbox, creates an attributed SpendIntent the gate executes, books AI cost
+  (3,600 µ$ → $0.01) against the envelope; allow-list and argument validation; idle on low budget; paused agent.

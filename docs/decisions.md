@@ -98,3 +98,10 @@ booking the same money produce one entry. Out-of-order events throw `RetryLaterE
 backoff); still unmatched on the final attempt → alert + suspense. When inbound delivery is impossible (the cloud
 session's safety policy blocks ingress tunnels), `pnpm webhooks:pull` fetches the same events from
 `/v1/notifications/webhooks-events` over the authenticated API.
+
+## ADR-014: Agent model cost is reserved up front and booked from real token usage (2026-11-12)
+
+Each run places a ledger hold for its tier's `maxRunCostMinor` before calling the model, so concurrent runs and
+spends cannot overdraw the envelope; a budget guard stops further steps once half of that maximum is used. After the
+run the hold is converted into the constitution §2.8 entry for the exact cost (micro-dollars from token usage ×
+configured prices, rounded up to the cent). Prices and model names are config (`AGPAL_MODELS_JSON`), never code.

@@ -13,7 +13,8 @@
     "seed": "node --env-file-if-exists=../../.env --import tsx scripts/seed.ts",
     "approvals": "node --env-file-if-exists=../../.env --import tsx scripts/approvals.ts",
     "reconcile": "node --env-file-if-exists=../../.env --import tsx scripts/reconcile.ts",
-    "loop:manual": "node --env-file-if-exists=../../.env --import tsx scripts/loop-manual.ts"
+    "loop:manual": "node --env-file-if-exists=../../.env --import tsx scripts/loop-manual.ts",
+    "agent:run": "node --env-file-if-exists=../../.env --import tsx scripts/agent-run.ts"
   },
   "dependencies": {
     "@agpal/shared": "workspace:*",
