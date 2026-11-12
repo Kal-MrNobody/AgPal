@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { loadEngine, recalculate, type PlanSnapshot } from './headless.js';
 
 /**
@@ -24,6 +24,12 @@ const plan: PlanSnapshot = {
 };
 
 describe('headless Bryntum engine', () => {
+  // The first import of the Bryntum bundle is cold and can take several seconds on a CI runner; load it once
+  // (loadEngine caches it) with its own budget so the scheduling tests time only the scheduling.
+  beforeAll(async () => {
+    await loadEngine();
+  }, 30_000);
+
   it('schedules a payment milestone with a startnoearlierthan constraint and a settlement lag', async () => {
     const r = await recalculate(plan, []);
     const by = Object.fromEntries(r.tasks.map((t) => [t.id, t]));
