@@ -306,3 +306,10 @@ Next: **Prompt 10 — Agent runtime core.**
   diagram, PayPal APIs used, AG Studio / Bryntum usage, APIMatic write-up link.
 - `docs/demo-script.md`: a timed 3-minute demo walkthrough.
 - Remaining founder actions: deploy the Render Blueprint (`docs/deploy.md`), record the demo, submit on Devpost.
+
+## 2026-11-12 — Playbook revision after sponsor feedback (decisions recorded)
+
+- ADR-016 to ADR-020 in `docs/decisions.md` (no `.env` reads [invariant 8 in CLAUDE.md], PayPal Server SDK via the
+  Context Plugin skills, Bryntum server-side schedule tool + payment milestones + worker headless recalculation,
+  AG Studio built-in lead + read-only CFO agent + gate-rechecked approval card, Money flow Sankey + distinctive
+  theme). Conflicts with the current code listed for the founder; nothing changed in code yet.
