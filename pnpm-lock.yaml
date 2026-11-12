@@ -301,15 +301,25 @@ importers:
 
   packages/policy:
     dependencies:
+      '@agpal/db':
+        specifier: workspace:*
+        version: link:../db
       '@agpal/ledger':
         specifier: workspace:*
         version: link:../ledger
       '@agpal/shared':
         specifier: workspace:*
         version: link:../shared
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
       zod:
         specifier: 4.6.7
         version: 4.6.7
+    devDependencies:
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
 
   packages/shared:
     dependencies:

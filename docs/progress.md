@@ -55,3 +55,13 @@ Next: **Prompt 2 — Money constitution (interview first).**
   convertHold.
 - Tests (real Postgres, throwaway DB per file): worked week reproduced step by step; concurrency;
   DB guards; fast-check property test. CI now runs a Postgres service.
+
+## 2026-11-12 — Prompt 4: Policy gate
+
+- `packages/policy`: zod `PolicyConfig` (constitution §3/§4 defaults, basis-point multipliers),
+  pure `decide()`, `Gate` (submit, approve with deny re-check, reject, retry, abandon, kill switches,
+  autonomy level, payee allow-list), `PaymentsPort` + `FakePayments`.
+- Ledger flows booked by the gate: allocation, internal invoice settlement, payout (accrual + cash out
+  converting the hold), refund.
+- 47 tests: rule table, approval round trips, kill switch, velocity race, idempotent retry, refund caps,
+  fuzz proving envelopes never overspend. Rule set summarised in `docs/architecture.md`.
