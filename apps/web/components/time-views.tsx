@@ -17,6 +17,8 @@ const HOUR = 3_600_000;
  * Bryntum 8 time views (trial mode, no licence key).
  * - Gantt: the company plan. Dates are computed on the server by the headless engine; the browser only displays them
  *   (CrudManager load from /api/schedule, tasks manually scheduled, read-only). Edits go to the server and reload.
+ *   If the server engine is unavailable (ADR-018 fallback), affected rows arrive unscheduled, the browser engine
+ *   computes them, and they are flagged "unconfirmed".
  * - Scheduler: one row per agent; events are runs, assigned tasks and dispute work blocks; disputes whose response
  *   deadline has no work allocated are highlighted; subscription renewals and expected payouts are markers.
  */
@@ -40,6 +42,13 @@ export function TimeViews({
         { type: 'name', width: 300 },
         { type: 'startdate' },
         { type: 'percentdone', width: 90 },
+        {
+          text: 'Dates',
+          width: 130,
+          // ADR-018 fallback: rows the server engine could not recalculate are scheduled here and flagged.
+          renderer: ({ record }: { record: { originalData?: { confirmed?: boolean } } }) =>
+            record.originalData?.confirmed === false ? '⚠ unconfirmed' : 'server-computed',
+        },
       ],
       viewPreset: 'weekAndDayLetter',
       barMargin: 8,

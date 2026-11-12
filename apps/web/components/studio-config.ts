@@ -254,6 +254,7 @@ const pages: Record<PageId, AgPageState<BoardroomRegistry>> = {
       approvals: kpi('Approvals waiting', 'overview.approvalsWaiting'),
       alerts: kpi('Open alerts', 'overview.openAlerts'),
       runway: kpi('Runway (weeks)', 'overview.runwayWeeks'),
+      moneyFlow: { type: 'moneyFlow', dataMapping: {}, format: title('Money flow') },
       revVsAi: {
         type: 'column-chart-grouped',
         dataMapping: {
@@ -271,8 +272,9 @@ const pages: Record<PageId, AgPageState<BoardroomRegistry>> = {
       approvals: at(12, 0, 4, 6),
       alerts: at(16, 0, 4, 6),
       runway: at(20, 0, 4, 6),
-      revVsAi: at(0, 6, 14, 14),
-      alertsGrid: at(14, 6, 10, 14),
+      moneyFlow: at(0, 6, 24, 18),
+      revVsAi: at(0, 24, 14, 14),
+      alertsGrid: at(14, 24, 10, 14),
     },
   },
   departments: {

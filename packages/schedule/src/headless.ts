@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 /**
  * Headless schedule recalculation with Bryntum's Gantt engine (Prompt 20), following Bryntum's guidance:
  * - each expected payment is its own zero-duration milestone ("Payment received: INV-123");
@@ -6,11 +7,20 @@
  * - settlement delay is the dependency's lag, not a padded date;
  * - a slip changes only that milestone's constraintDate and the engine reschedules everything downstream; when the
  *   payment lands, the milestone is marked done at the actual date.
- * Runs in Node with no browser: only the data layer (ProjectModel) is loaded, never UI widgets.
+ * Runs in Node with no browser (ADR-018). The engine is loaded lazily, in this order:
+ *  1. Bryntum's Node bundle `gantt.node.mjs` (path in BRYNTUM_GANTT_NODE_BUNDLE, or `@bryntum/gantt/gantt.node.mjs`):
+ *     the distribution Bryntum recommends for servers. It ships from Bryntum's own registry / customer zone, not the
+ *     public npm packages;
+ *  2. the engine data model inside the public `@bryntum/gantt-enterprise` package (`lib/Gantt/model/ProjectModel.js`),
+ *     no UI widgets;
+ *  3. neither loads → `EngineUnavailableError`, and ScheduleService falls back to browser recalculation with
+ *     downstream dates flagged unconfirmed.
  */
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — deep import of the engine's data model (no UI) from the Gantt package.
-import ProjectModelImport from '@bryntum/gantt-enterprise/lib/Gantt/model/ProjectModel.js';
+
+export class EngineUnavailableError extends Error {}
+
+/** Which engine build recalculates on the server. `AGPAL_SCHEDULE_ENGINE=browser` forces the fallback (tests, drills). */
+export type EngineSource = 'gantt.node.mjs' | 'gantt-enterprise/ProjectModel';
 
 export interface PlanTask {
   id: string;
@@ -75,11 +85,48 @@ interface BryntumProject {
   destroy(): void;
 }
 type ProjectCtor = new (config: Record<string, unknown>) => BryntumProject;
-const ProjectModel = ProjectModelImport as unknown as ProjectCtor;
+
+let engine: Promise<{ ProjectModel: ProjectCtor; source: EngineSource }> | undefined;
+
+async function tryImport(spec: string): Promise<Record<string, unknown> | undefined> {
+  try {
+    return (await import(spec)) as Record<string, unknown>;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Load the engine once per process (see the order above). */
+export function loadEngine(): Promise<{ ProjectModel: ProjectCtor; source: EngineSource }> {
+  if (process.env.AGPAL_SCHEDULE_ENGINE === 'browser')
+    return Promise.reject(
+      new EngineUnavailableError('server engine disabled (AGPAL_SCHEDULE_ENGINE=browser)'),
+    );
+  engine ??= (async () => {
+    const bundlePath = process.env.BRYNTUM_GANTT_NODE_BUNDLE;
+    const bundle =
+      (bundlePath ? await tryImport(pathToFileURL(bundlePath).href) : undefined) ??
+      (await tryImport('@bryntum/gantt/gantt.node.mjs'));
+    if (typeof bundle?.ProjectModel === 'function')
+      return { ProjectModel: bundle.ProjectModel as ProjectCtor, source: 'gantt.node.mjs' };
+    const model = await tryImport('@bryntum/gantt-enterprise/lib/Gantt/model/ProjectModel.js');
+    if (typeof model?.default === 'function')
+      return {
+        ProjectModel: model.default as ProjectCtor,
+        source: 'gantt-enterprise/ProjectModel',
+      };
+    throw new EngineUnavailableError('no Bryntum engine build could be loaded in Node');
+  })();
+  // A failed load is retried on the next call (e.g. after the bundle is installed).
+  engine.catch(() => {
+    engine = undefined;
+  });
+  return engine;
+}
 
 const iso = (d: Date | undefined): string => (d ? d.toISOString() : '');
 
-function build(plan: PlanSnapshot): BryntumProject {
+function build(ProjectModel: ProjectCtor, plan: PlanSnapshot): BryntumProject {
   return new ProjectModel({
     startDate: plan.projectStart,
     tasks: plan.tasks.map((t) => ({
@@ -109,14 +156,15 @@ export async function recalculate(
   plan: PlanSnapshot,
   changes: PlanChange[],
 ): Promise<Recalculated> {
-  const before = build(plan);
+  const { ProjectModel } = await loadEngine();
+  const before = build(ProjectModel, plan);
   await before.commitAsync();
   const baseline = new Map(
     before.taskStore.map((t) => [t.id, `${iso(t.startDate)}|${iso(t.endDate)}`]),
   );
   before.destroy();
 
-  const project = build(plan);
+  const project = build(ProjectModel, plan);
   await project.commitAsync();
   for (const c of changes) {
     const task = project.taskStore.getById(c.taskId);

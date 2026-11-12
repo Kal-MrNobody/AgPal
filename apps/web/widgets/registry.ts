@@ -26,6 +26,11 @@ export interface LedgerGridDef {
   dataMapping: Record<string, never>;
   format?: AgWidgetDataFormat<object>;
 }
+export interface MoneyFlowDef {
+  type: 'moneyFlow';
+  dataMapping: Record<string, never>;
+  format?: AgWidgetDataFormat<object>;
+}
 export interface AgentScorecardDef {
   type: 'agentScorecard';
   dataMapping: Record<string, never>;
@@ -40,6 +45,7 @@ export interface BoardroomRegistry extends AgBaseRegistry {
     | AgBaseWidgetDefinition<'approvalCard', ApprovalCardDef>
     | AgBaseWidgetDefinition<'agentScorecard', AgentScorecardDef>
     | AgBaseWidgetDefinition<'ledgerGrid', LedgerGridDef>
+    | AgBaseWidgetDefinition<'moneyFlow', MoneyFlowDef>
   )[];
 }
 

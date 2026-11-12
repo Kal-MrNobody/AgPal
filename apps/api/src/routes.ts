@@ -15,7 +15,7 @@ import {
   type Database,
 } from '@agpal/db';
 import { pinAutonomy, trustRecord, type Services } from '@agpal/policy';
-import { ScheduleService } from '@agpal/schedule';
+import { ScheduleService, type ScheduleJob, type ScheduleJobResult } from '@agpal/schedule';
 
 export interface RouteDeps {
   db: Database;
@@ -25,6 +25,8 @@ export interface RouteDeps {
   adminToken?: string;
   /** Server-side OpenAI key for the Studio CFO proxy (absent in the cloud dev environment, where the proxy injects it). */
   openaiApiKey?: string;
+  /** Runs a founder schedule edit in the worker (headless engine there) and returns its result (ADR-018). */
+  scheduleChange?: (job: ScheduleJob) => Promise<ScheduleJobResult>;
 }
 
 /** Cents → dollars for display in charts only. All money logic stays in bigint minor units (invariant 2). */
@@ -146,7 +148,7 @@ export function registerReadRoutes(app: FastifyInstance, deps: RouteDeps): void 
     if (!co) return reply;
     return new ScheduleService(deps.db).crudLoad(co);
   });
-  /** Edits from the browser Gantt go through the same server path as agents (engine recalculates on the server). */
+  /** Edits from the browser Gantt are recalculated by the worker, the same path as agents (ADR-018). */
   app.post<{
     Body: { taskId: string; constraintDate?: string; receivedOn?: string; reason?: string };
   }>('/api/schedule/change', async (req, reply) => {
@@ -166,16 +168,18 @@ export function registerReadRoutes(app: FastifyInstance, deps: RouteDeps): void 
       )
     )
       return reply.code(400).send({ error: 'date required' });
-    const svc = new ScheduleService(deps.db);
+    if (!deps.scheduleChange)
+      return reply.code(503).send({ error: 'schedule worker not configured' });
     try {
-      await svc.apply(co, change, {
-        kind: 'founder',
-        reason: b.reason ?? 'edited in the boardroom Gantt',
+      await deps.scheduleChange({
+        companyId: co,
+        change,
+        actor: { kind: 'founder', reason: b.reason ?? 'edited in the boardroom Gantt' },
       });
     } catch (e) {
       return reply.code(400).send({ error: e instanceof Error ? e.message : 'invalid change' });
     }
-    return svc.crudLoad(co);
+    return new ScheduleService(deps.db).crudLoad(co);
   });
 
   // ── Boardroom CFO (AG Studio Agent Framework) ───────────────────────────────────────────────────

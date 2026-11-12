@@ -7,6 +7,14 @@
     "incremental": true,
     "plugins": [{ "name": "next" }]
   },
-  "include": ["next-env.d.ts", "app", "lib", "*.ts", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "app",
+    "lib",
+    "components",
+    "widgets",
+    "*.ts",
+    ".next/types/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

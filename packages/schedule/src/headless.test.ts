@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { recalculate, type PlanSnapshot } from './headless.js';
+import { loadEngine, recalculate, type PlanSnapshot } from './headless.js';
 
 /**
  * Bryntum's scheduling engine, headless in Node (no browser, no DOM). One payment milestone gates a launch; when the
@@ -55,5 +55,10 @@ describe('headless Bryntum engine', () => {
     const p = r.tasks.find((t) => t.id === 'pay-inv-123');
     expect(p?.percentDone).toBe(100);
     expect(p?.start.slice(0, 10)).toBe('2026-11-19');
+  });
+
+  it('loads the engine in Node: gantt.node.mjs when installed, else the public package data model', async () => {
+    const { source } = await loadEngine();
+    expect(['gantt.node.mjs', 'gantt-enterprise/ProjectModel']).toContain(source);
   });
 });

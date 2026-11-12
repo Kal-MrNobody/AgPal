@@ -97,11 +97,16 @@ Details: [docs/architecture.md](docs/architecture.md), [docs/money-constitution.
 ## AG Studio and Bryntum
 
 - **AG Studio** powers the boardroom: live dashboards (AG Grid / AG Charts Enterprise) streaming ledger changes,
-  custom widgets (envelope gauges, approval cards, agent scorecards, ledger grid), and the **CFO assistant** built on
-  the AG Studio Agent Framework. It answers "Why did Growth overspend?" from the ledger, and every dashboard change it
-  makes is attributed and undoable.
-- **Bryntum Gantt** shows the company's operating schedule (launches, campaigns, month-end close). The Finance agent
-  moves tasks through the same scheduling engine running **headless in Node** ([docs/bryntum-headless.md](docs/bryntum-headless.md)).
+  a distinctive "private-bank ledger" theme, and custom widgets. The signature **Money flow** widget is a Sankey of
+  every dollar from the ledger: customers and founder → treasury → department envelopes → payees, with PayPal fees,
+  AI cost, refunds and internal invoices as their own flows. Approval cards re-check every action in the policy gate
+  on the server. The AI side starts from the Studio Agent Framework's **built-in lead agent**, which delegates money
+  questions to our custom **CFO agent**. The CFO has read-only ledger tools and answers "Why did Growth overspend?";
+  every dashboard change is attributed and undoable.
+- **Bryntum Gantt** shows the plan: each expected payment is a zero-duration milestone gating what it pays for
+  (Finish-to-Start, settlement delay as lag, expected date as a `startnoearlierthan` constraint). Agents never touch
+  the UI: the Finance agent uses one server-side `schedule` tool, and recalculation runs **headless in the worker**.
+  The browser only displays computed dates ([docs/bryntum-headless.md](docs/bryntum-headless.md)).
 
 ## APIMatic
 

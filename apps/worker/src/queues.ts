@@ -5,6 +5,7 @@ export const QUEUES = {
   agentHeartbeat: 'agent.heartbeat',
   agentWake: 'agent.wake',
   payoutSync: 'payout.sync',
+  scheduleApply: 'schedule.apply',
 } as const;
 
 export type QueueName = (typeof QUEUES)[keyof typeof QUEUES];

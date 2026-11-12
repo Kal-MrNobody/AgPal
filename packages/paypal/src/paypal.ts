@@ -5,12 +5,23 @@ import {
   ExperienceContextShippingPreference,
   PaypalExperienceUserAction,
   PaypalWalletContextShippingPreference,
+  type Order,
 } from '@paypal/paypal-server-sdk';
 import { isCurrency, type Currency, type Secret } from '@agpal/shared';
 import { requireAmount, fromPayPalAmount, toPayPalAmount } from './amount.js';
 import { fromErrorBody, PayPalError } from './errors.js';
 import { PayPalHttp, toRequestId, type HttpOptions } from './http.js';
 import { createSdk, type SdkControllers } from './sdk.js';
+import {
+  balanceWire,
+  captureWire,
+  linkHref,
+  orderCaptureWire,
+  refundWire,
+  searchPage,
+  subscriptionFields,
+  transactionWire,
+} from './typed.js';
 import type {
   Balance,
   Capture,
@@ -85,11 +96,6 @@ const asObj = (v: unknown): Json => (typeof v === 'object' && v !== null ? (v as
 const asArr = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
 const str = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
 type AmountLike = Parameters<typeof fromPayPalAmount>[0];
-
-/** The raw JSON body of an SDK response: our source of truth for fields the typed model might drop. */
-function rawBody(res: { body: unknown }): Json {
-  return typeof res.body === 'string' && res.body ? asObj(JSON.parse(res.body)) : {};
-}
 
 function currencyOf(code: unknown): Currency {
   if (typeof code !== 'string' || !isCurrency(code))
@@ -228,13 +234,12 @@ export class PayPal {
         },
       }),
     );
-    const raw = rawBody(res);
-    const links = asArr(raw.links).map(asObj);
-    const approve = links.find((l) => l.rel === 'payer-action' || l.rel === 'approve');
+    const order = res.result;
+    const approveUrl = linkHref(order.links, 'payer-action', 'approve');
     return {
-      orderId: str(raw.id) ?? '',
-      status: str(raw.status) ?? '',
-      ...(approve ? { approveUrl: str(approve.href) ?? '' } : {}),
+      orderId: order.id ?? '',
+      status: order.status ?? '',
+      ...(approveUrl ? { approveUrl } : {}),
     };
   }
 
@@ -275,7 +280,7 @@ export class PayPal {
         },
       }),
     );
-    return captureFromOrder(rawBody(res));
+    return captureFromTypedOrder(res.result);
   }
 
   /** Capture an approved order. Idempotent on requestId. */
@@ -287,30 +292,28 @@ export class PayPal {
         prefer: 'return=representation',
       }),
     );
-    return captureFromOrder(rawBody(res));
+    return captureFromTypedOrder(res.result);
   }
 
   async getOrder(
     orderId: string,
   ): Promise<{ orderId: string; status: string; captures: Capture[] }> {
     const res = await sdkCall('getOrder', () => this.sdk.orders.getOrder({ id: orderId }));
-    const raw = rawBody(res);
-    const status = str(raw.status) ?? '';
-    const caps = asArr(asObj(asObj(asArr(raw.purchase_units)[0]).payments).captures);
-    return { orderId, status, captures: caps.length ? [captureFromOrder(raw)] : [] };
+    const order = res.result;
+    const caps = order.purchaseUnits?.[0]?.payments?.captures ?? [];
+    return {
+      orderId,
+      status: order.status ?? '',
+      captures: caps.length ? [captureFromTypedOrder(order)] : [],
+    };
   }
 
   async getCapture(captureId: string): Promise<Capture> {
     const res = await sdkCall('getCapturedPayment', () =>
       this.sdk.payments.getCapturedPayment({ captureId }),
     );
-    const raw = rawBody(res);
-    const orderId =
-      str(
-        asObj(raw.supplementary_data).related_ids &&
-          asObj(asObj(raw.supplementary_data).related_ids).order_id,
-      ) ?? '';
-    return normalizeCapture(raw, orderId);
+    const cap = res.result;
+    return normalizeCapture(captureWire(cap), cap.supplementaryData?.relatedIds?.orderId ?? '');
   }
 
   // ---------------------------------------------------------------- Payments (SDK)
@@ -337,12 +340,12 @@ export class PayPal {
         },
       }),
     );
-    return normalizeRefund(rawBody(res), i.captureId);
+    return normalizeRefund(refundWire(res.result), i.captureId);
   }
 
   async getRefund(refundId: string, captureId = ''): Promise<Refund> {
     const res = await sdkCall('getRefund', () => this.sdk.payments.getRefund({ refundId }));
-    return normalizeRefund(rawBody(res), captureId);
+    return normalizeRefund(refundWire(res.result), captureId);
   }
 
   // ---------------------------------------------------------------- Catalog (REST)
@@ -440,15 +443,12 @@ export class PayPal {
         },
       }),
     );
-    const raw = rawBody(res);
-    const approve = asArr(raw.links)
-      .map(asObj)
-      .find((l) => l.rel === 'approve');
+    const sub = subscriptionFields(res.result);
     return {
-      id: str(raw.id) ?? '',
-      planId: str(raw.plan_id) ?? i.planId,
-      status: str(raw.status) ?? '',
-      ...(approve ? { approveUrl: str(approve.href) ?? '' } : {}),
+      id: sub.id ?? '',
+      planId: sub.planId ?? i.planId,
+      status: sub.status ?? '',
+      ...(sub.approveUrl ? { approveUrl: sub.approveUrl } : {}),
     };
   }
 
@@ -456,8 +456,8 @@ export class PayPal {
     const res = await sdkCall('getSubscription', () =>
       this.sdk.subscriptions.getSubscription({ id }),
     );
-    const raw = rawBody(res);
-    return { id, planId: str(raw.plan_id) ?? '', status: str(raw.status) ?? '' };
+    const sub = subscriptionFields(res.result);
+    return { id, planId: sub.planId ?? '', status: sub.status ?? '' };
   }
 
   /**
@@ -728,10 +728,10 @@ export class PayPal {
         }
         throw e;
       }
-      const raw = rawBody(res);
-      for (const d of asArr(raw.transaction_details))
-        out.push(normalizeTransaction(asObj(asObj(d).transaction_info)));
-      const totalPages = typeof raw.total_pages === 'number' ? raw.total_pages : 1;
+      const { transactions, totalPages, lastRefreshed } = searchPage(res.result);
+      for (const t of transactions) out.push(normalizeTransaction(transactionWire(t)));
+      if (lastRefreshed && !Number.isNaN(lastRefreshed.getTime()))
+        out.lastRefreshed = lastRefreshed;
       if (page >= totalPages) break;
     }
     return out;
@@ -741,18 +741,13 @@ export class PayPal {
     const res = await sdkCall('searchBalances', () =>
       this.sdk.transactions.searchBalances({ currencyCode: currency }),
     );
-    const raw = rawBody(res);
-    const b = asObj(
-      asArr(raw.balances)
-        .map(asObj)
-        .find((x) => x.currency === currency),
-    );
+    const b = balanceWire(res.result, currency);
     return {
       currency,
-      availableMinor: fromPayPalAmount(b.available_balance as AmountLike)?.amountMinor ?? 0n,
-      withheldMinor: fromPayPalAmount(b.withheld_balance as AmountLike)?.amountMinor ?? 0n,
-      totalMinor: fromPayPalAmount(b.total_balance as AmountLike)?.amountMinor ?? 0n,
-      ...(str(raw.as_of_time) ? { asOf: str(raw.as_of_time) ?? '' } : {}),
+      availableMinor: fromPayPalAmount(b.available)?.amountMinor ?? 0n,
+      withheldMinor: fromPayPalAmount(b.withheld)?.amountMinor ?? 0n,
+      totalMinor: fromPayPalAmount(b.total)?.amountMinor ?? 0n,
+      ...(b.asOf ? { asOf: b.asOf } : {}),
     };
   }
 
@@ -875,6 +870,12 @@ export function captureFromOrder(order: Json): Capture {
       false,
     );
   return normalizeCapture(cap, str(order.id) ?? '');
+}
+
+/** SDK path: the typed Order model's first capture, validated by the same normalizer. */
+export function captureFromTypedOrder(order: Order): Capture {
+  const { capture, orderId } = orderCaptureWire(order);
+  return normalizeCapture(capture, orderId);
 }
 
 export function normalizeCapture(cap: Json, orderId: string): Capture {

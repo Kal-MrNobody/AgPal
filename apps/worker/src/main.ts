@@ -8,6 +8,7 @@ import {
   createServices,
   TelegramChannel,
 } from '@agpal/policy';
+import { ScheduleService, type ScheduleJob, type ScheduleJobResult } from '@agpal/schedule';
 import { loadEnv } from '@agpal/shared';
 import { QUEUES, WEBHOOK_RETRY_LIMIT } from './queues.js';
 import { scheduleTools } from './schedule-tools.js';
@@ -37,6 +38,18 @@ await boss.createQueue(QUEUES.webhookPaypal, {
 });
 for (const q of [QUEUES.reconciliation, QUEUES.agentHeartbeat, QUEUES.agentWake, QUEUES.payoutSync])
   await boss.createQueue(q);
+
+// Founder edits from the boardroom Gantt: recalculated here by the headless engine, like agent changes (ADR-018).
+await boss.createQueue(QUEUES.scheduleApply, { retryLimit: 0 });
+await boss.work<ScheduleJob>(QUEUES.scheduleApply, async ([job]): Promise<ScheduleJobResult> => {
+  if (!job) throw new Error('empty schedule job');
+  const r = await new ScheduleService(db).apply(
+    job.data.companyId,
+    job.data.change,
+    job.data.actor,
+  );
+  return { engine: r.engine, changed: r.changed };
+});
 
 await boss.work<{ eventId: string }>(QUEUES.webhookPaypal, async ([job]) => {
   if (!job) return;
