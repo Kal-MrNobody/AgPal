@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm';
 import { PgBoss } from 'pg-boss';
 import { agentsToWake, createAgentRuntime } from '@agpal/agents';
 import { agents, createDb } from '@agpal/db';
-import { createServices } from '@agpal/policy';
+import { announcePendingApprovals, createServices, TelegramChannel } from '@agpal/policy';
 import { loadEnv } from '@agpal/shared';
 import { QUEUES, WEBHOOK_RETRY_LIMIT } from './queues.js';
 import { scheduleTools } from './schedule-tools.js';
@@ -72,6 +72,26 @@ setInterval(() => {
     }
   });
 }, 15_000);
+
+// Telegram approval cards: announce each new held approval once.
+if (
+  env.AGPAL_COMPANY_ID &&
+  env.TELEGRAM_BOT_TOKEN &&
+  env.TELEGRAM_CHAT_ID &&
+  env.AGPAL_CALLBACK_SECRET
+) {
+  const channel = new TelegramChannel({
+    botToken: env.TELEGRAM_BOT_TOKEN,
+    chatId: env.TELEGRAM_CHAT_ID,
+    callbackSecret: env.AGPAL_CALLBACK_SECRET,
+  });
+  const companyId = env.AGPAL_COMPANY_ID;
+  setInterval(() => {
+    void announcePendingApprovals(db, companyId, channel).catch((e: unknown) => {
+      console.error('telegram announce failed', e instanceof Error ? e.message : 'unknown');
+    });
+  }, 30_000);
+}
 
 // Nightly reconciliation (03:17 UTC) for the deployment's company.
 await boss.schedule(QUEUES.reconciliation, '17 3 * * *', {});

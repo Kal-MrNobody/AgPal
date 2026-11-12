@@ -1,6 +1,11 @@
 import { PgBoss } from 'pg-boss';
 import { createDb, webhookEvents } from '@agpal/db';
-import { createServices } from '@agpal/policy';
+import {
+  createServices,
+  handleTelegramCallback,
+  TelegramChannel,
+  type TelegramUpdate,
+} from '@agpal/policy';
 import { loadEnv } from '@agpal/shared';
 import { registerReadRoutes } from './routes.js';
 import { buildServer } from './server.js';
@@ -47,6 +52,42 @@ const app = buildServer({
     },
   },
   routes: (a) => {
+    // Telegram approvals: only when fully configured (fails closed otherwise).
+    const tg =
+      env.TELEGRAM_BOT_TOKEN &&
+      env.TELEGRAM_CHAT_ID &&
+      env.TELEGRAM_FOUNDER_USER_ID &&
+      env.TELEGRAM_WEBHOOK_SECRET &&
+      env.AGPAL_CALLBACK_SECRET
+        ? {
+            channel: new TelegramChannel({
+              botToken: env.TELEGRAM_BOT_TOKEN,
+              chatId: env.TELEGRAM_CHAT_ID,
+              callbackSecret: env.AGPAL_CALLBACK_SECRET,
+            }),
+            deps: {
+              db,
+              gate: services.gate,
+              webhookSecret: env.TELEGRAM_WEBHOOK_SECRET,
+              callbackSecret: env.AGPAL_CALLBACK_SECRET,
+              founderChatId: env.TELEGRAM_CHAT_ID,
+              founderUserId: env.TELEGRAM_FOUNDER_USER_ID,
+            },
+          }
+        : undefined;
+    a.post('/telegram/webhook', async (req, reply) => {
+      if (!tg) return reply.code(404).send();
+      const headers = Object.fromEntries(
+        Object.entries(req.headers).map(([k, v]) => [k.toLowerCase(), Array.isArray(v) ? v[0] : v]),
+      );
+      const update = req.body as TelegramUpdate;
+      const r = await handleTelegramCallback(tg.deps, headers, update);
+      if (update.callback_query?.id && r.ok)
+        await tg.channel
+          .answer(update.callback_query.id, `${r.status}: ${r.explanation}`)
+          .catch(() => undefined);
+      return reply.code(200).send({ ok: r.ok });
+    });
     registerReadRoutes(a, {
       db,
       services,

@@ -243,3 +243,20 @@ Next: **Prompt 10 — Agent runtime core.**
 - Stop condition met: changing one payment's `constraintDate` with no browser open recalculates every dependent
   milestone on the server (tests), the Gantt shows exactly the server's dates (verified in the UI: INV-1042 slipped
   to Nov 22 → launch Nov 24, contractor Nov 27, Q1 allocation Nov 28), and the change is in the audit trail.
+
+## 2026-11-12 — Prompt 21: Fast approvals everywhere
+
+- Boardroom: approval cards (intent, evidence links, rule, agent's reason, approve/deny with note) plus
+  **batch-approve small items** (≤ $25; `POST /api/approvals/batch`, every item re-checked by the gate).
+- `NotificationChannel` abstraction with a **Telegram** implementation (`packages/policy/src/notify.ts`): the worker
+  announces each held approval once with inline Approve/Deny buttons; `POST /telegram/webhook` handles callbacks.
+- A callback acts only if: Telegram's secret header matches, it comes from the founder's chat **and** user id, its
+  `callback_data` carries a valid HMAC for that approval and decision (fits the 64-byte limit), and its callback id has
+  never been seen. The gate then re-checks every deny rule; approving twice does nothing.
+- Tests (7): signature round trip; forged callbacks (no/wrong header, bad or foreign signature, wrong chat, wrong user,
+  flipped decision) approve nothing; a replayed callback is ignored; a deny cannot be replayed into an approve; a
+  double-tapped approve pays once; announcements happen once and never contain the bot token.
+- To enable: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_FOUNDER_USER_ID`, `TELEGRAM_WEBHOOK_SECRET`,
+  `AGPAL_CALLBACK_SECRET`, then `setWebhook` to `<PUBLIC_API_URL>/telegram/webhook` with the secret token.
+
+**Phase 4 done.**

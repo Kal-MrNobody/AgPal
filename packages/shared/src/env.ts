@@ -27,6 +27,14 @@ export const envSchema = z.object({
   AGPAL_ADMIN_TOKEN: optionalSecret,
   /** Signs founder login links and session cookies in apps/web. */
   AGPAL_SESSION_SECRET: optionalSecret,
+  /** Telegram approvals (Prompt 21). The bot token goes in the URL path, so it must come from env. */
+  TELEGRAM_BOT_TOKEN: optionalSecret,
+  TELEGRAM_CHAT_ID: z.string().optional(),
+  TELEGRAM_FOUNDER_USER_ID: z.string().optional(),
+  /** Sent by Telegram in X-Telegram-Bot-Api-Secret-Token (set with setWebhook). */
+  TELEGRAM_WEBHOOK_SECRET: optionalSecret,
+  /** Signs approve/deny button payloads. */
+  AGPAL_CALLBACK_SECRET: optionalSecret,
   /** Public URL of apps/api (tunnel or Render), used to register the PayPal webhook. */
   PUBLIC_API_URL: z.url().optional(),
 });

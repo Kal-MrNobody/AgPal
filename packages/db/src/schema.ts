@@ -586,3 +586,25 @@ export const scheduleDependencies = pgTable(
   },
   (t) => [index('schedule_deps_company').on(t.companyId)],
 );
+
+/** Approval notifications sent per channel (Prompt 21), so each held approval is announced once. */
+export const approvalNotifications = pgTable(
+  'approval_notifications',
+  {
+    id: text('id').primaryKey(),
+    approvalId: text('approval_id').notNull(),
+    channel: text('channel').notNull(),
+    externalRef: text('external_ref'),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('approval_notifications_once').on(t.approvalId, t.channel)],
+);
+
+/** Telegram callback ids already handled: a replayed callback is ignored. */
+export const channelCallbacks = pgTable('channel_callbacks', {
+  id: text('id').primaryKey(),
+  channel: text('channel').notNull(),
+  approvalId: text('approval_id').notNull(),
+  decision: text('decision').notNull(),
+  createdAt: createdAt(),
+});

@@ -92,6 +92,34 @@ export function registerReadRoutes(app: FastifyInstance, deps: RouteDeps): void 
     },
   );
 
+  /** Batch-approve small held items: every pending spend approval at or under `maxMinor` (deny rules re-checked each). */
+  app.post<{ Body: { maxMinor: string; note?: string } }>(
+    '/api/approvals/batch',
+    async (req, reply) => {
+      const co = await guard(req, reply);
+      if (!co) return reply;
+      if (!/^\d+$/.test(req.body.maxMinor))
+        return reply.code(400).send({ error: 'maxMinor must be integer cents' });
+      const max = BigInt(req.body.maxMinor);
+      const pending = await deps.db
+        .select()
+        .from(approvals)
+        .where(and(eq(approvals.companyId, co), eq(approvals.status, 'pending')));
+      const results = [];
+      for (const a of pending) {
+        const i = a.intent as { amountMinor?: string };
+        if (a.intentId.startsWith('prop_') || BigInt(i.amountMinor ?? '0') > max) continue;
+        const r = await deps.services.gate.approve(
+          a.id,
+          'founder',
+          req.body.note ?? 'batch-approved',
+        );
+        results.push({ approvalId: a.id, status: r.status, rule: r.decision.rule });
+      }
+      return { approved: results };
+    },
+  );
+
   app.post<{ Body: { on: boolean } }>('/api/kill-switch', async (req, reply) => {
     const co = await guard(req, reply);
     if (!co) return reply;
