@@ -15,8 +15,111 @@ export class Commerce {
     private readonly paypal: Pick<
       PayPal,
       'createOrder' | 'captureOrder' | 'createAndCaptureSandboxCardOrder'
-    >,
+    > &
+      Partial<
+        Pick<
+          PayPal,
+          | 'createProduct'
+          | 'createMonthlyPlan'
+          | 'createSubscription'
+          | 'createInvoice'
+          | 'sendInvoice'
+          | 'remindInvoice'
+          | 'provideDisputeEvidence'
+          | 'getDispute'
+        >
+      >,
   ) {}
+
+  /** Create a catalog product (digital goods). */
+  async createProduct(
+    companyId: string,
+    name: string,
+    description?: string,
+  ): Promise<{ id: string; name: string }> {
+    if (!this.paypal.createProduct) throw new Error('catalog not available');
+    return this.paypal.createProduct({
+      name,
+      ...(description ? { description } : {}),
+      requestId: `product:${companyId}:${name}`,
+    });
+  }
+
+  /** Create a monthly subscription plan for a product. */
+  async createMonthlyPlan(
+    companyId: string,
+    productId: string,
+    name: string,
+    amountMinor: bigint,
+    currency: Currency,
+  ): Promise<{ id: string; status: string }> {
+    if (!this.paypal.createMonthlyPlan) throw new Error('plans not available');
+    return this.paypal.createMonthlyPlan({
+      productId,
+      name,
+      amountMinor,
+      currency,
+      requestId: `plan:${companyId}:${productId}:${name}:${amountMinor}`,
+    });
+  }
+
+  /** Start a subscription; the customer approves it at `approveUrl`. */
+  async createSubscription(
+    companyId: string,
+    planId: string,
+    reference: string,
+  ): Promise<{ id: string; status: string; approveUrl?: string }> {
+    if (!this.paypal.createSubscription) throw new Error('subscriptions not available');
+    return this.paypal.createSubscription({
+      planId,
+      customId: `agpal:${companyId}:${reference}`,
+      requestId: `sub:${companyId}:${reference}`,
+    });
+  }
+
+  /** Create and send a PayPal invoice for custom work. Returns the PayPal invoice id. */
+  async invoiceCustomer(i: {
+    companyId: string;
+    payerEmail: string;
+    items: { name: string; quantity: number; unitAmountMinor: bigint }[];
+    note?: string;
+    dueInDays?: number;
+    reference: string;
+  }): Promise<{ id: string; status: string }> {
+    if (!this.paypal.createInvoice || !this.paypal.sendInvoice)
+      throw new Error('invoicing not available');
+    const inv = await this.paypal.createInvoice({
+      requestId: `invoice:${i.companyId}:${i.reference}`,
+      payerEmail: i.payerEmail,
+      currency: 'USD',
+      items: i.items,
+      ...(i.note ? { note: i.note } : {}),
+      ...(i.dueInDays ? { dueInDays: i.dueInDays } : {}),
+      reference: `agpal:${i.companyId}:${i.reference}`,
+    });
+    await this.paypal.sendInvoice(inv.id, `invoice-send:${inv.id}`);
+    return { id: inv.id, status: 'SENT' };
+  }
+
+  async remindInvoice(invoiceId: string, note: string): Promise<void> {
+    if (!this.paypal.remindInvoice) throw new Error('invoicing not available');
+    await this.paypal.remindInvoice(
+      invoiceId,
+      `invoice-remind:${invoiceId}:${new Date().toISOString().slice(0, 10)}`,
+      note,
+    );
+  }
+
+  /** Submit dispute evidence (text). Not a money movement; accepting a claim goes through the gate. */
+  async submitDisputeEvidence(disputeId: string, notes: string): Promise<void> {
+    if (!this.paypal.provideDisputeEvidence) throw new Error('disputes not available');
+    await this.paypal.provideDisputeEvidence(disputeId, { notes });
+  }
+
+  async getDispute(disputeId: string): Promise<unknown> {
+    if (!this.paypal.getDispute) throw new Error('disputes not available');
+    return this.paypal.getDispute(disputeId);
+  }
 
   /** A checkout link for a customer (PAY_NOW, NO_SHIPPING). */
   createCheckout(i: {
@@ -74,6 +177,7 @@ export class Commerce {
     kind: RevenueKind = 'sales',
     attribution?: Attribution,
     dept = 'revenue',
+    extraMetadata: Record<string, unknown> = {},
   ): Promise<void> {
     if (c.status !== 'COMPLETED') return; // PENDING captures are booked when PAYMENT.CAPTURE.COMPLETED arrives.
     const revenue = kind === 'sales' ? ACC.sales(dept) : ACC.subscriptions(dept);
@@ -91,7 +195,7 @@ export class Commerce {
       ],
       externalRef: c.captureId,
       idempotencyKey: `paypal:capture:${c.captureId}`,
-      metadata: { orderId: c.orderId, customId: c.customId, kind },
+      metadata: { orderId: c.orderId, customId: c.customId, kind, ...extraMetadata },
     });
   }
 }

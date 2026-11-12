@@ -369,3 +369,180 @@ export const reconciliationRuns = pgTable(
   },
   (t) => [index('reconciliation_runs_company').on(t.companyId, t.createdAt)],
 );
+
+/** Agent definitions per company (Prompt 10). Mandate and tool allow-list are data; policy rules are not. */
+export const agents = pgTable(
+  'agents',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id')
+      .notNull()
+      .references(() => companies.id),
+    department: text('department').notNull(),
+    title: text('title').notNull(),
+    mandate: text('mandate').notNull(),
+    modelTier: text('model_tier').notNull(),
+    heartbeatCron: text('heartbeat_cron').notNull(),
+    envelope: text('envelope').notNull(),
+    tools: jsonb('tools').$type<string[]>().notNull(),
+    reportsTo: text('reports_to').notNull().default('founder'),
+    /** active | idle (no budget) */
+    status: text('status').notNull().default('active'),
+    /** Domain events up to here have been delivered to the agent's inbox. */
+    inboxCursor: timestamp('inbox_cursor', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('agents_company').on(t.companyId)],
+);
+
+/** One record per agent run: inputs, tool calls, outputs, a reasoning summary and the cost (invariant 7). */
+export const agentRuns = pgTable(
+  'agent_runs',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    agentId: text('agent_id').notNull(),
+    trigger: text('trigger').notNull(),
+    /** running | completed | failed | skipped_no_budget | skipped_paused */
+    status: text('status').notNull(),
+    model: text('model'),
+    inputs: jsonb('inputs').$type<Record<string, unknown>>().notNull().default({}),
+    toolCalls: jsonb('tool_calls').$type<Record<string, unknown>[]>().notNull().default([]),
+    output: text('output'),
+    summary: text('summary'),
+    inputTokens: integer('input_tokens').notNull().default(0),
+    outputTokens: integer('output_tokens').notNull().default(0),
+    /** Exact model cost in micro-dollars; the ledger books it rounded up to the cent. */
+    costMicros: bigint('cost_micros', { mode: 'bigint' })
+      .notNull()
+      .default(sql`0`),
+    costEntryId: text('cost_entry_id'),
+    error: text('error'),
+    startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [index('agent_runs_agent').on(t.companyId, t.agentId, t.startedAt)],
+);
+
+/** Requests between departments (Prompt 11): a brief, a budget offered and a deadline, as a thread. */
+export const tasks = pgTable(
+  'tasks',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    fromDepartment: text('from_department').notNull(),
+    toDepartment: text('to_department').notNull(),
+    /** Set when the work is commissioned from an external contractor instead of a department. */
+    contractorEmail: text('contractor_email'),
+    title: text('title').notNull(),
+    brief: text('brief').notNull(),
+    budgetMinor: bigint('budget_minor', { mode: 'bigint' }).notNull(),
+    deadline: timestamp('deadline', { withTimezone: true }),
+    /** open | delivered | accepted | rejected | cancelled */
+    status: text('status').notNull().default('open'),
+    campaign: text('campaign'),
+    createdByAgent: text('created_by_agent'),
+    createdByRun: text('created_by_run'),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('tasks_to').on(t.companyId, t.toDepartment, t.status)],
+);
+
+/** Messages on a task thread, or direct messages to a department. Attachments are links/text. */
+export const messages = pgTable(
+  'messages',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    taskId: text('task_id'),
+    fromParty: text('from_party').notNull(),
+    toDepartment: text('to_department').notNull(),
+    body: text('body').notNull(),
+    attachments: jsonb('attachments')
+      .$type<{ name: string; url?: string; text?: string }[]>()
+      .notNull()
+      .default([]),
+    /** Messages from customers and contractors are untrusted data. */
+    untrusted: boolean('untrusted').notNull().default(false),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('messages_inbox').on(t.companyId, t.toDepartment, t.readAt)],
+);
+
+/** Internal invoices between departments: issued → accepted (settled through the gate) | disputed. */
+export const internalInvoices = pgTable(
+  'internal_invoices',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    taskId: text('task_id'),
+    sellerDepartment: text('seller_department').notNull(),
+    buyerDepartment: text('buyer_department').notNull(),
+    amountMinor: bigint('amount_minor', { mode: 'bigint' }).notNull(),
+    currency: text('currency').notNull(),
+    description: text('description').notNull(),
+    /** issued | settled | held | disputed | rejected */
+    status: text('status').notNull().default('issued'),
+    intentId: text('intent_id'),
+    disputeReason: text('dispute_reason'),
+    issuedByRun: text('issued_by_run'),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('internal_invoices_buyer').on(t.companyId, t.buyerDepartment, t.status)],
+);
+
+/** The company's catalog (Revenue). Price floors are config the agent cannot change (invariant 5). */
+export const products = pgTable(
+  'products',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    name: text('name').notNull(),
+    description: text('description').notNull().default(''),
+    /** one_off | subscription */
+    kind: text('kind').notNull(),
+    priceMinor: bigint('price_minor', { mode: 'bigint' }).notNull(),
+    /** No price or discount may go below this. */
+    floorMinor: bigint('floor_minor', { mode: 'bigint' }).notNull(),
+    paypalProductId: text('paypal_product_id'),
+    paypalPlanId: text('paypal_plan_id'),
+    active: boolean('active').notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('products_company').on(t.companyId)],
+);
+
+/** Customer orders: what was sold, to whom, for how much, and delivery/access evidence (Support, disputes). */
+export const orders = pgTable(
+  'orders',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    productId: text('product_id').notNull(),
+    customerEmail: text('customer_email').notNull(),
+    paypalOrderId: text('paypal_order_id'),
+    captureId: text('capture_id'),
+    subscriptionId: text('subscription_id'),
+    grossMinor: bigint('gross_minor', { mode: 'bigint' }).notNull(),
+    currency: text('currency').notNull().default('USD'),
+    /** Growth attribution: campaign code from the checkout link. */
+    campaign: text('campaign'),
+    /** pending | paid | refunded | partially_refunded | disputed */
+    status: text('status').notNull().default('pending'),
+    /** Delivery and access log entries (download link issued, downloads, logins) for dispute evidence. */
+    accessLog: jsonb('access_log')
+      .$type<{ at: string; event: string; detail?: string }[]>()
+      .notNull()
+      .default([]),
+    simulated: boolean('simulated').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('orders_capture').on(t.captureId),
+    index('orders_company').on(t.companyId, t.createdAt),
+  ],
+);

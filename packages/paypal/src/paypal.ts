@@ -694,19 +694,40 @@ export class PayPal {
 
   // ---------------------------------------------------------------- Transaction Search (SDK)
 
-  /** All transactions in [start, end], every page. Read from the raw body so no field is lost. */
-  async searchTransactions(start: Date, end: Date): Promise<TransactionRecord[]> {
-    const out: TransactionRecord[] = [];
+  /**
+   * All transactions in [start, end], every page. Read from the raw body so no field is lost. `lastRefreshed` is
+   * how far PayPal's Transaction Search data is complete (it lags real time by up to a few hours).
+   */
+  async searchTransactions(
+    start: Date,
+    end: Date,
+  ): Promise<TransactionRecord[] & { lastRefreshed?: Date }> {
+    const out: TransactionRecord[] & { lastRefreshed?: Date } = [];
     for (let page = 1; ; page++) {
-      const res = await sdkCall('searchTransactions', () =>
-        this.sdk.transactions.searchTransactions({
-          startDate: start.toISOString().replace(/\.\d{3}Z$/, 'Z'),
-          endDate: end.toISOString().replace(/\.\d{3}Z$/, 'Z'),
-          fields: 'transaction_info',
-          pageSize: 500,
-          page,
-        }),
-      );
+      let res;
+      try {
+        res = await sdkCall('searchTransactions', () =>
+          this.sdk.transactions.searchTransactions({
+            startDate: start.toISOString().replace(/\.\d{3}Z$/, 'Z'),
+            endDate: end.toISOString().replace(/\.\d{3}Z$/, 'Z'),
+            fields: 'transaction_info',
+            pageSize: 500,
+            page,
+          }),
+        );
+      } catch (e) {
+        // Asking for a window that starts after PayPal's last refresh returns 404 "Data for the given start date is
+        // not available" rather than an empty list: no data yet, and nothing in the window is covered.
+        if (
+          e instanceof PayPalError &&
+          e.status === 404 &&
+          /start date is not available/i.test(e.message)
+        ) {
+          out.lastRefreshed = start;
+          return out;
+        }
+        throw e;
+      }
       const raw = rawBody(res);
       for (const d of asArr(raw.transaction_details))
         out.push(normalizeTransaction(asObj(asObj(d).transaction_info)));

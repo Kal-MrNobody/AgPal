@@ -102,7 +102,7 @@ export class WebhookProcessor {
         case 'PAYMENT.CAPTURE.REVERSED':
           return await this.refunded(event, r, meta);
         case 'PAYMENT.SALE.COMPLETED':
-          return await this.saleCompleted(event, r);
+          return await this.saleCompleted(event, r, ctx.simulated ?? false);
         case 'INVOICING.INVOICE.PAID':
           return await this.invoicePaid(event, r);
         case 'CUSTOMER.DISPUTE.CREATED':
@@ -198,7 +198,11 @@ export class WebhookProcessor {
   }
 
   /** Subscription payment (v1 sale resource): amount.total, transaction_fee.value. */
-  private async saleCompleted(event: PayPalEvent, r: Json): Promise<ProcessResult> {
+  private async saleCompleted(
+    event: PayPalEvent,
+    r: Json,
+    simulated: boolean,
+  ): Promise<ProcessResult> {
     const amount = obj(r.amount);
     const currency = str(amount.currency);
     if (!currency || !isCurrency(currency))
@@ -217,7 +221,14 @@ export class WebhookProcessor {
       feeMinor: fee,
       netMinor: gross - fee,
     };
-    await this.commerce.bookCapture(companyId, capture, 'subscriptions');
+    await this.commerce.bookCapture(
+      companyId,
+      capture,
+      'subscriptions',
+      undefined,
+      'revenue',
+      simulated ? { simulated: true } : {},
+    );
     await this.publish(companyId, 'revenue.received', 'revenue', `capture:${capture.captureId}`, {
       captureId: capture.captureId,
       subscriptionId: capture.orderId,
@@ -372,7 +383,11 @@ export class WebhookProcessor {
       if (item.feeMinor === undefined)
         throw new RetryLaterError(`Payout item ${item.itemId} has no fee yet`);
       if (intent.status === 'pending' || intent.status === 'failed') {
-        await this.gate.settlePayout(intent.id, { itemId: item.itemId, feeMinor: item.feeMinor });
+        await this.gate.settlePayout(intent.id, {
+          itemId: item.itemId,
+          feeMinor: item.feeMinor,
+          ...(item.transactionId ? { transactionId: item.transactionId } : {}),
+        });
       }
       if (status === 'UNCLAIMED') {
         await this.publish(

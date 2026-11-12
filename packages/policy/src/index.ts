@@ -8,3 +8,6 @@ export * from './commerce.js';
 export * from './webhooks.js';
 export * from './inbound.js';
 export * from './services.js';
+export * from './reconcile.js';
+export * from './dry.js';
+export * from './autonomy.js';

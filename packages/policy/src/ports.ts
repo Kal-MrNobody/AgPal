@@ -16,6 +16,8 @@ export interface PayoutRequest {
 export interface PayoutResult {
   batchId: string;
   itemId?: string;
+  /** The PayPal transaction id (what Transaction Search reports). */
+  transactionId?: string;
   /** PayPal transaction status of the item, e.g. SUCCESS, PENDING, UNCLAIMED. */
   itemStatus: string;
   /** Known once PayPal processed the item; undefined means "still pending". */
@@ -41,6 +43,8 @@ export interface RefundResult {
 export interface PaymentsPort {
   payout(req: PayoutRequest): Promise<PayoutResult>;
   refund(req: RefundRequest): Promise<RefundResult>;
+  /** Accept a customer's dispute claim (refunds them through PayPal). */
+  acceptDisputeClaim(disputeId: string, note: string, idempotencyKey: string): Promise<void>;
 }
 
 /** Deterministic in-memory provider. Never touches the network. */
@@ -68,6 +72,13 @@ export class FakePayments implements PaymentsPort {
       itemStatus: 'SUCCESS',
       feeMinor: this.payoutFee(req.amountMinor),
     });
+  }
+
+  readonly acceptedDisputes: string[] = [];
+
+  acceptDisputeClaim(disputeId: string): Promise<void> {
+    if (!this.acceptedDisputes.includes(disputeId)) this.acceptedDisputes.push(disputeId);
+    return Promise.resolve();
   }
 
   refund(req: RefundRequest): Promise<RefundResult> {

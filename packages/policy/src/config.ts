@@ -23,6 +23,7 @@ export const envelopeRulesSchema = z.object({
   payeePolicy: z.enum(['allowlist', 'original_order', 'none']),
   categories: z.array(z.string()).nullable(),
   alwaysHold: z.array(z.enum(spendActions)).default([]),
+  /** Off by default: adding a payee to the allow-list is the founder's approval of the relationship. */
   holdFirstPayoutToNewPayee: z.boolean().default(false),
 });
 
@@ -78,13 +79,14 @@ export const defaultPolicyConfig: PolicyConfigInput = {
       categories: ['budgeting', 'internal'],
     },
     support: {
-      actions: ['refund', 'internal_invoice'],
+      actions: ['refund', 'internal_invoice', 'dispute_accept'],
       autoApproveUpToMinor: '5000',
       perTxCapMinor: null,
       dailyCapMinor: '20000',
       velocity: { max: 5, windowMinutes: 60 },
       payeePolicy: 'original_order',
-      categories: ['refunds', 'internal'],
+      categories: ['refunds', 'disputes', 'internal'],
+      alwaysHold: ['dispute_accept'],
     },
     growth: {
       actions: ['payout', 'internal_invoice'],
@@ -94,7 +96,6 @@ export const defaultPolicyConfig: PolicyConfigInput = {
       velocity: { max: 5, windowMinutes: 60 },
       payeePolicy: 'allowlist',
       categories: ['content', 'listings', 'launches', 'internal'],
-      holdFirstPayoutToNewPayee: true,
     },
   },
 };

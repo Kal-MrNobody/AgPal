@@ -22,6 +22,27 @@
       "when": 1794483587444,
       "tag": "0002_webhooks_alerts_recon",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794484672836,
+      "tag": "0003_agents",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794486979637,
+      "tag": "0004_coordination",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794487200739,
+      "tag": "0005_catalog_orders",
+      "breakpoints": true
     }
   ]
 }
