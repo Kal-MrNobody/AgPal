@@ -14,7 +14,7 @@ import {
   spendIntents,
   type Database,
 } from '@agpal/db';
-import { trustRecord, type Services } from '@agpal/policy';
+import { pinAutonomy, trustRecord, type Services } from '@agpal/policy';
 import { ScheduleService } from '@agpal/schedule';
 
 export interface RouteDeps {
@@ -117,6 +117,20 @@ export function registerReadRoutes(app: FastifyInstance, deps: RouteDeps): void 
         results.push({ approvalId: a.id, status: r.status, rule: r.decision.rule });
       }
       return { approved: results };
+    },
+  );
+
+  /** Founder pins an agent's autonomy level (0–4) or unpins it (null). */
+  app.post<{ Params: { id: string }; Body: { level: number | null } }>(
+    '/api/agents/:id/pin',
+    async (req, reply) => {
+      const co = await guard(req, reply);
+      if (!co) return reply;
+      const level = req.body.level;
+      if (level !== null && (!Number.isInteger(level) || level < 0 || level > 4))
+        return reply.code(400).send({ error: 'level must be 0-4 or null' });
+      await pinAutonomy(deps.db, co, req.params.id, level);
+      return { agentId: req.params.id, pinned: level };
     },
   );
 

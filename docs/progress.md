@@ -278,3 +278,16 @@ Next: **Prompt 10 — Agent runtime core.**
   double-clicked approval (one payout); simultaneous spends on one envelope (never overspent); rejected approval
   releases its hold — each ends with an invariant check. Duplicate/out-of-order webhooks and token expiry are covered
   in `webhooks.test.ts` and `http.test.ts`. Recovery paths: `docs/runbook.md`.
+
+## 2026-11-12 — Prompt 24: Graduated autonomy
+
+- `packages/policy/src/autonomy.ts`: trust score from the ledger and gate record (+1 accepted work / settled internal
+  invoice, −3 reversal caused, −2 refund caused, −2 policy denial, −3 founder override; trailing 30 days);
+  `nextLevel` (promote at ≥ 10 with no denial for 7 days, up to level 3 without a pin; demote below 0 or on a founder
+  override); `applyDailyAutonomy` at the UTC day boundary (worker cron 00:05, once per day, audit-logged);
+  `pinAutonomy` (founder; `POST /api/agents/:id/pin`). Levels map to cap and auto-approve multipliers in policy config.
+- Scorecard widget shows level (📌 when pinned), trust score and its inputs.
+- Tests (6): rules; promotion from accepted work (and the gate's limits rise); demotion from denials (level 0 holds
+  everything); pinning survives the daily job.
+
+**Phase 5 done.**

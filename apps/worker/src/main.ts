@@ -2,7 +2,12 @@ import { eq } from 'drizzle-orm';
 import { PgBoss } from 'pg-boss';
 import { agentsToWake, createAgentRuntime } from '@agpal/agents';
 import { agents, createDb } from '@agpal/db';
-import { announcePendingApprovals, createServices, TelegramChannel } from '@agpal/policy';
+import {
+  announcePendingApprovals,
+  applyDailyAutonomy,
+  createServices,
+  TelegramChannel,
+} from '@agpal/policy';
 import { loadEnv } from '@agpal/shared';
 import { QUEUES, WEBHOOK_RETRY_LIMIT } from './queues.js';
 import { scheduleTools } from './schedule-tools.js';
@@ -99,6 +104,19 @@ setInterval(() => {
     console.error('recovery failed', e instanceof Error ? e.message : 'unknown');
   });
 }, 5 * 60_000);
+
+// Graduated autonomy: levels change only at the UTC day boundary (00:05), logged.
+await boss.createQueue('autonomy.daily');
+await boss.schedule('autonomy.daily', '5 0 * * *', {});
+await boss.work('autonomy.daily', async () => {
+  if (!env.AGPAL_COMPANY_ID) return;
+  const staff = await db.select().from(agents).where(eq(agents.companyId, env.AGPAL_COMPANY_ID));
+  await applyDailyAutonomy(
+    db,
+    env.AGPAL_COMPANY_ID,
+    staff.map((a) => ({ id: a.id, department: a.department })),
+  );
+});
 
 // Nightly reconciliation (03:17 UTC) for the deployment's company.
 await boss.schedule(QUEUES.reconciliation, '17 3 * * *', {});
