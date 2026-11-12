@@ -4,6 +4,7 @@ import {
   approvals,
   auditLog,
   companies,
+  domainEvents,
   payees,
   policyConfigs,
   spendIntents,
@@ -302,6 +303,14 @@ export class Gate {
         })
         .where(eq(spendIntents.id, row.id));
       if (!approved && row.holdId) await this.ledger.releaseHold(row.holdId, tx);
+      await this.publishDecision(
+        tx,
+        intent.companyId,
+        row.id,
+        intent.envelope,
+        approved ? 'approved' : `blocked: ${decision.rule}`,
+        note,
+      );
       await this.audit(
         tx,
         intent.companyId,
@@ -336,6 +345,28 @@ export class Gate {
     };
   }
 
+  /** Tell the requesting department how the founder decided (the agent reads it on its next run). */
+  private async publishDecision(
+    db: DbOrTx,
+    companyId: string,
+    intentId: string,
+    department: string,
+    outcome: string,
+    note: string,
+  ): Promise<void> {
+    await db
+      .insert(domainEvents)
+      .values({
+        id: newId('evt'),
+        companyId,
+        name: 'approval.decided',
+        department,
+        dedupeKey: `approval:${intentId}`,
+        payload: { intentId, outcome, note },
+      })
+      .onConflictDoNothing();
+  }
+
   /** Founder denies a held intent. */
   async reject(approvalId: string, by: string, note = ''): Promise<void> {
     await this.db.transaction(async (tx) => {
@@ -359,6 +390,8 @@ export class Gate {
         .set({ status: 'rejected', updatedAt: this.now() })
         .where(eq(spendIntents.id, apr.intentId));
       if (row?.holdId) await this.ledger.releaseHold(row.holdId, tx);
+      if (row)
+        await this.publishDecision(tx, apr.companyId, apr.intentId, row.envelope, 'rejected', note);
       await this.audit(tx, apr.companyId, by, 'founder.rejected', 'spend_intent', apr.intentId, {
         note,
       });

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { PgBoss } from 'pg-boss';
-import { createAgentRuntime } from '@agpal/agents';
+import { agentsToWake, createAgentRuntime } from '@agpal/agents';
 import { agents, createDb } from '@agpal/db';
 import { createServices } from '@agpal/policy';
 import { loadEnv } from '@agpal/shared';
@@ -14,7 +14,7 @@ const services = createServices(
   env,
   env.AGPAL_COMPANY_ID ? { defaultCompanyId: env.AGPAL_COMPANY_ID } : {},
 );
-const runtime = createAgentRuntime(
+const { runtime } = createAgentRuntime(
   db,
   services,
   env.OPENAI_API_KEY ? { openaiApiKey: env.OPENAI_API_KEY.reveal() } : {},
@@ -49,6 +49,29 @@ await boss.work<{ agentId: string }>(QUEUES.agentHeartbeat, async ([job]) => {
   if (!job) return;
   await runtime.run(job.data.agentId, { kind: 'heartbeat' });
 });
+
+// Event wake-ups: new domain events wake the agents of their department (coalesced per agent).
+await boss.work<{ agentId: string; eventId: string; name: string }>(
+  QUEUES.agentWake,
+  async ([job]) => {
+    if (!job) return;
+    await runtime.run(job.data.agentId, {
+      kind: 'event',
+      eventId: job.data.eventId,
+      name: job.data.name,
+    });
+  },
+);
+let wakeCursor = new Date();
+setInterval(() => {
+  if (!env.AGPAL_COMPANY_ID) return;
+  void agentsToWake(db, env.AGPAL_COMPANY_ID, wakeCursor).then(async (wakes) => {
+    for (const w of wakes) {
+      await boss.send(QUEUES.agentWake, w, { singletonKey: w.agentId, singletonSeconds: 60 });
+      if (w.at > wakeCursor) wakeCursor = w.at;
+    }
+  });
+}, 15_000);
 
 // Nightly reconciliation (03:17 UTC) for the deployment's company.
 await boss.schedule(QUEUES.reconciliation, '17 3 * * *', {});

@@ -142,3 +142,16 @@ Next: **Prompt 10 — Agent runtime core.**
   `NODE_USE_ENV_PROXY=1` so OpenAI calls go through the key-injecting proxy.
 - Tests (5): heartbeat run reads its inbox, creates an attributed SpendIntent the gate executes, books AI cost
   (3,600 µ$ → $0.01) against the envelope; allow-list and argument validation; idle on low budget; paused agent.
+
+## 2026-11-12 — Prompt 11: Coordination, approvals and the kill switch
+
+- Tables `tasks`, `messages`, `internal_invoices`. `Coordination`: requests between departments (brief, budget
+  offered, deadline) as threads, delivery, internal invoices (issue ≤ budget offered → accept through the gate as an
+  `internal_invoice` intent that settles envelope→envelope with no PayPal call, or dispute). Tools: `send_request`,
+  `list_open_tasks`, `deliver_task`, `issue_internal_invoice`, `accept_internal_invoice`, `dispute_internal_invoice`.
+- Inbox = domain events for the department + unread messages + invoices awaiting it (untrusted messages flagged).
+- Event wake-ups: worker polls new domain events every 15 s and enqueues `agent.wake` per department agent
+  (coalesced per agent). Founder decisions publish `approval.decided` to the requesting department.
+- Kill switch enforced in the runtime/scheduler (skip) and in the gate (deny).
+- Tests: full internal invoice cycle across two scripted agents, over-budget invoice refused, approval round trip
+  learned on the next run, paused agent cannot spend, audit trail links run → intent → decision → ledger entries.

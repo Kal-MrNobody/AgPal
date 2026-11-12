@@ -423,3 +423,73 @@ export const agentRuns = pgTable(
   },
   (t) => [index('agent_runs_agent').on(t.companyId, t.agentId, t.startedAt)],
 );
+
+/** Requests between departments (Prompt 11): a brief, a budget offered and a deadline, as a thread. */
+export const tasks = pgTable(
+  'tasks',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    fromDepartment: text('from_department').notNull(),
+    toDepartment: text('to_department').notNull(),
+    /** Set when the work is commissioned from an external contractor instead of a department. */
+    contractorEmail: text('contractor_email'),
+    title: text('title').notNull(),
+    brief: text('brief').notNull(),
+    budgetMinor: bigint('budget_minor', { mode: 'bigint' }).notNull(),
+    deadline: timestamp('deadline', { withTimezone: true }),
+    /** open | delivered | accepted | rejected | cancelled */
+    status: text('status').notNull().default('open'),
+    campaign: text('campaign'),
+    createdByAgent: text('created_by_agent'),
+    createdByRun: text('created_by_run'),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('tasks_to').on(t.companyId, t.toDepartment, t.status)],
+);
+
+/** Messages on a task thread, or direct messages to a department. Attachments are links/text. */
+export const messages = pgTable(
+  'messages',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    taskId: text('task_id'),
+    fromParty: text('from_party').notNull(),
+    toDepartment: text('to_department').notNull(),
+    body: text('body').notNull(),
+    attachments: jsonb('attachments')
+      .$type<{ name: string; url?: string; text?: string }[]>()
+      .notNull()
+      .default([]),
+    /** Messages from customers and contractors are untrusted data. */
+    untrusted: boolean('untrusted').notNull().default(false),
+    readAt: timestamp('read_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('messages_inbox').on(t.companyId, t.toDepartment, t.readAt)],
+);
+
+/** Internal invoices between departments: issued → accepted (settled through the gate) | disputed. */
+export const internalInvoices = pgTable(
+  'internal_invoices',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    taskId: text('task_id'),
+    sellerDepartment: text('seller_department').notNull(),
+    buyerDepartment: text('buyer_department').notNull(),
+    amountMinor: bigint('amount_minor', { mode: 'bigint' }).notNull(),
+    currency: text('currency').notNull(),
+    description: text('description').notNull(),
+    /** issued | settled | held | disputed | rejected */
+    status: text('status').notNull().default('issued'),
+    intentId: text('intent_id'),
+    disputeReason: text('dispute_reason'),
+    issuedByRun: text('issued_by_run'),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('internal_invoices_buyer').on(t.companyId, t.buyerDepartment, t.status)],
+);

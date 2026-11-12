@@ -11,7 +11,7 @@ const agentId = process.argv
   .slice(2)
   .find((a, i, all) => !a.startsWith('--') && !(all[i - 1] ?? '').startsWith('--'));
 if (!agentId) throw new Error('usage: pnpm agent:run <agentId>');
-const runtime = createAgentRuntime(
+const { runtime } = createAgentRuntime(
   ctx.db,
   ctx.s,
   ctx.env.OPENAI_API_KEY ? { openaiApiKey: ctx.env.OPENAI_API_KEY.reveal() } : {},
