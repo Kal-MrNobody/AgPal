@@ -1,0 +1,20 @@
+{
+  "name": "@agpal/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=../../.env --import tsx --watch src/main.ts",
+    "start": "node --env-file-if-exists=../../.env --import tsx src/main.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agpal/shared": "workspace:*",
+    "@agpal/db": "workspace:*",
+    "@agpal/policy": "workspace:*",
+    "@agpal/agents": "workspace:*",
+    "pg-boss": "12.38.2"
+  }
+}
