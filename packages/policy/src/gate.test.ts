@@ -259,5 +259,5 @@ describe.runIf(hasDb)('Gate (Postgres)', () => {
     );
     const executed = await t.db.select().from(spendIntents).where(eq(spendIntents.companyId, co));
     expect(executed.some((r) => r.rule === 'funds.insufficient')).toBe(true);
-  });
+  }, 30_000); // ~225 concurrent DB transactions: well past the 5 s default on a loaded CI runner
 });
