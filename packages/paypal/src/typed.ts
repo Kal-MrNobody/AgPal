@@ -100,6 +100,8 @@ export const searchPage = (r: SearchResponse) => ({
     .map((d) => d.transactionInfo)
     .filter((t): t is TransactionInformation => t !== undefined),
   totalPages: r.totalPages ?? 1,
+  /** PayPal's data is complete up to this time (Transaction Search lags real time by up to ~3 hours). */
+  lastRefreshed: r.lastRefreshedDatetime ? new Date(r.lastRefreshedDatetime) : undefined,
 });
 
 export function balanceWire(r: BalancesResponse, currency: string) {

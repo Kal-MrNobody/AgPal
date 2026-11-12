@@ -207,6 +207,66 @@ describe.runIf(hasDb)('Reconciler', () => {
       0,
     );
   });
+
+  it('sandbox card sale and payout (rows recorded 2026-11-12): T0005 capture, holds as info, payout via live item lookup', async () => {
+    await sale('1L4080435R4747457', 2_900n, 124n);
+    await ledger.ensurePayable(co, 'payee_x', 'USD');
+    await ledger.post({
+      companyId: co,
+      currency: 'USD',
+      actor: 'system',
+      description: 'payout accrual',
+      flow: 'payout_accrual',
+      occurredAt: ago(5),
+      postings: [
+        { account: ACC.contractors('growth'), amountMinor: 500n },
+        { account: ACC.payable('payee_x'), amountMinor: -500n },
+      ],
+    });
+    await ledger.post({
+      companyId: co,
+      currency: 'USD',
+      actor: 'system',
+      description: 'payout sent',
+      flow: 'payout_sent',
+      externalRef: 'PPSCPUTFJKKEE', // payout item id: not settled yet, so no transaction id in metadata
+      occurredAt: ago(5),
+      postings: [
+        { account: ACC.payable('payee_x'), amountMinor: 500n },
+        { account: ACC.paypalFees, amountMinor: 25n },
+        { account: ACC.unallocated, amountMinor: -525n },
+      ],
+    });
+    records.push(
+      tx('1L4080435R4747457', 'T0005', 2_900n, -124n),
+      tx('9JB97249BH940945J', 'T2002', -2_776n, 0n),
+      tx('5PB00521KW105872P', 'T1503', -525n, 0n),
+      tx('3C032148K6098833V', 'T0001', -500n, -25n),
+      tx('1P71872335160761K', 'T1105', 525n, 0n),
+    );
+    const live = {
+      getCapture: () => Promise.reject(new Error('unused')),
+      getRefund: () => Promise.reject(new Error('unused')),
+      getPayoutItem: (id: string) =>
+        Promise.resolve({
+          itemId: id,
+          transactionId: '3C032148K6098833V',
+          status: 'UNCLAIMED',
+          currency: 'USD' as const,
+          amountMinor: 500n,
+          feeMinor: 25n,
+          receiver: 'contractor@example.com',
+        }),
+    };
+    const r = await rec.run(co, ago(10), now, { now, live, skipBalance: true });
+    expect(r.counts).toMatchObject({
+      matched: 2,
+      info: 3,
+      missing_in_ledger: 0,
+      missing_in_paypal: 0,
+      amount_mismatch: 0,
+    });
+  });
 });
 
 describe.runIf(hasDb)('Reconciler live verification', () => {

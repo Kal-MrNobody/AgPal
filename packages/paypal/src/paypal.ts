@@ -728,8 +728,10 @@ export class PayPal {
         }
         throw e;
       }
-      const { transactions, totalPages } = searchPage(res.result);
+      const { transactions, totalPages, lastRefreshed } = searchPage(res.result);
       for (const t of transactions) out.push(normalizeTransaction(transactionWire(t)));
+      if (lastRefreshed && !Number.isNaN(lastRefreshed.getTime()))
+        out.lastRefreshed = lastRefreshed;
       if (page >= totalPages) break;
     }
     return out;

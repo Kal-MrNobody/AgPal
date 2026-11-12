@@ -7,6 +7,7 @@ import type { PayPalInbound } from './inbound.js';
 /** PayPal transaction event codes we book, and which ledger flow they match. */
 const CODE_FLOWS: Record<string, string[]> = {
   T0006: ['capture'], // PayPal checkout / Orders API
+  T0005: ['capture'], // direct card payment (Orders API with a card payment_source)
   T0003: ['capture'], // pre-approved payment (subscriptions)
   T0002: ['capture'], // subscription payment
   T0011: ['capture'], // mobile/card payment
@@ -16,6 +17,9 @@ const CODE_FLOWS: Record<string, string[]> = {
 };
 /** Codes that are holds/releases or balance movements covered by the balance check, not separate entries. */
 const INFO_CODES = new Set([
+  'T1105', // release of a general account hold (e.g. after a payout is sent)
+  'T1503', // hold on available balance (reserved while a payout is processed)
+  'T2002', // hold on a new payment's net amount (sandbox/new-account payment hold)
   'T1110',
   'T1111',
   'T1201',
@@ -120,6 +124,19 @@ export class Reconciler {
     const items: ReconItem[] = [];
 
     const ledgerSide = await this.ledgerItems(companyId, start, end);
+    // A payout's ledger ref is PayPal's payout item id until settlement records its transaction id. With a live lookup,
+    // resolve unsettled items to the transaction id Transaction Search reports (T0001), so they can match.
+    if (opts.live) {
+      const lookup = opts.live;
+      await Promise.all(
+        ledgerSide
+          .filter((l) => l.flow === 'payout_sent' && l.ref === l.objectId)
+          .map(async (l) => {
+            const item = await lookup.getPayoutItem(l.objectId).catch(() => undefined);
+            if (item?.transactionId) l.ref = item.transactionId;
+          }),
+      );
+    }
     const byRef = new Map(ledgerSide.map((l) => [l.ref, l]));
     const matchedRefs = new Set<string>();
 

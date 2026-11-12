@@ -325,3 +325,19 @@ Next: **Prompt 10 — Agent runtime core.**
 - PayPal: SDK responses read through typed models (`typed.ts`) into the one validating normalizer; verified live in
   the sandbox (capture, refund, payout, Transaction Search, balances).
 - Money flow Sankey widget (Overview) and the private-bank-ledger theme.
+
+## 2026-11-12 — Phase 1 reconciliation re-checked against Transaction Search (scheduled check-in)
+
+Company `co_9ac65ecb3eca4020b8dea2fb054e3a07`, window 11:54:06–11:58:00 UTC, after PayPal's refresh.
+
+- First run (as scheduled, no `--live`): **MISMATCH**, matched 0, 8 missing_in_ledger. Not money errors; three
+  reconciler gaps exposed by real sandbox rows: card captures arrive as `T0005` (only `T0006` was mapped); payout
+  holds/releases `T1503`/`T1105` and the post-capture hold `T2002` were treated as unbooked; an unsettled payout's
+  ledger ref is the payout item id while Transaction Search reports the transaction id. Coverage also fell back to
+  "now − 3 h" because PayPal's `last_refreshed_datetime` was never read.
+- Fixed: `T0005` → capture; `T1105`/`T1503`/`T2002` → info (covered by the balance check); with `--live`, unsettled
+  payout items are resolved to their transaction id before matching; `searchTransactions` returns PayPal's
+  `lastRefreshedDatetime`. Test with the recorded sandbox rows in `reconcile.test.ts`.
+- Re-run with `--live`: **CLEAN**: capture `1L4080435R4747457` T0005 $29.00 **matched**; both payouts matched to
+  their T0001 transactions, which PayPal still shows **pending** (sandbox recipients unclaimed); 5 info rows;
+  missing 0, mismatches 0. PayPal data complete to 12:59:59Z.
