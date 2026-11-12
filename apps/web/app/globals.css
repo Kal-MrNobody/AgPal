@@ -390,3 +390,27 @@ h3,
   );
   outline: 2px dashed var(--warn, #f2a900);
 }
+
+/* Alert cards: severity edge, reason input, Resolve. */
+.wcard.alert {
+  border-left: 3px solid var(--brass);
+}
+.wcard.alert.critical {
+  border-left-color: var(--warn);
+}
+.wcard.alert .pill {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--warn);
+}
+.wcard.alert input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--ink);
+}

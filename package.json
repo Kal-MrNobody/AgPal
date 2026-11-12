@@ -28,7 +28,8 @@
     "founder:link": "pnpm --silent --filter @agpal/worker founder:link",
     "schedule:seed": "pnpm --silent --filter @agpal/worker schedule:seed",
     "webhook:register": "pnpm --silent --filter @agpal/api webhook:register",
-    "seed:demo": "pnpm --silent --filter @agpal/worker sim:week --dry"
+    "seed:demo": "pnpm --silent --filter @agpal/worker sim:week --dry",
+    "demo:hold": "pnpm --silent --filter @agpal/worker demo:hold"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -26,6 +26,11 @@ export interface LedgerGridDef {
   dataMapping: Record<string, never>;
   format?: AgWidgetDataFormat<object>;
 }
+export interface AlertCardDef {
+  type: 'alertCard';
+  dataMapping: Record<string, never>;
+  format?: AgWidgetDataFormat<object>;
+}
 export interface MoneyFlowDef {
   type: 'moneyFlow';
   dataMapping: Record<string, never>;
@@ -46,6 +51,7 @@ export interface BoardroomRegistry extends AgBaseRegistry {
     | AgBaseWidgetDefinition<'agentScorecard', AgentScorecardDef>
     | AgBaseWidgetDefinition<'ledgerGrid', LedgerGridDef>
     | AgBaseWidgetDefinition<'moneyFlow', MoneyFlowDef>
+    | AgBaseWidgetDefinition<'alertCard', AlertCardDef>
   )[];
 }
 
@@ -56,4 +62,5 @@ export interface BoardroomContext {
     decision: 'approve' | 'reject',
     note: string,
   ) => Promise<{ status: string; explanation?: string }>;
+  resolveAlert: (alertId: string, note: string) => Promise<{ status: string }>;
 }

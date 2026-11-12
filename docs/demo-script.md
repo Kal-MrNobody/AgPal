@@ -1,44 +1,75 @@
 # AgPal — 3-minute demo script
 
-Setup before recording: seeded company (`pnpm seed:demo` or the live `pnpm sim:week` company), API + web running,
-signed in as founder, one payout held in Approvals, PayPal sandbox dashboard open in a second tab.
+**Live:** https://agpal-web.onrender.com (sign-in link from `pnpm founder:link`, valid 15 minutes, session 12 hours).
 
-## 0:00–0:20 — The pitch (Overview page)
+## Before recording (5 minutes)
 
-"This is AgPal. It's a company where the employees are AI agents: Revenue, Finance, Support and Growth. I'm the
-founder; I'm the board. Every real dollar moves through PayPal, and no agent can touch PayPal directly."
+1. Fresh sign-in link (Render → agpal-worker → Shell: `WEB_URL=https://agpal-web.onrender.com pnpm founder:link`).
+2. One held payout waiting for you: `pnpm demo:hold` in the same Shell. It tops up Growth by $100 through the
+   gate (Finance allocation, within policy) and submits a $90 contractor payout that the gate **holds** (over
+   Growth's $50 auto-approve). Both are attributed to `demo-setup` in the audit trail.
+3. Second tab: PayPal sandbox dashboard (developer.paypal.com → Sandbox accounts → the business account → Activity).
+4. Window at 1500 px wide or more. The AG Studio watermark and the Bryntum "Trial" badge are expected (no licence keys).
 
-Show: cash, revenue, AI cost, envelopes per department.
+## 0:00–0:25 — The pitch (Overview)
 
-## 0:20–0:50 — Departments and the ledger
+"This is AgPal: a company whose employees are AI agents. Revenue, Finance, Support and Growth each run on a budget
+envelope with a mandate and a P&L. I'm the founder; I'm the board. Every real dollar moves through PayPal, and no
+agent can touch PayPal directly."
 
-Departments page: each agent has a budget envelope and a P&L. "Growth spent on contractors, Revenue sold
-subscriptions, Support issued refunds." Click Ledger: "Every line is a double-entry posting with the agent, run and
-reason behind it. The ledger is append-only, enforced in Postgres."
+Point at the **Money flow** Sankey: "Every dollar from the ledger: customers and my funding into the treasury, out to
+department envelopes, then to contractors, AI models and PayPal fees. Internal invoices between departments are their
+own flows. It always reconciles to the double-entry ledger."
 
-## 0:50–1:30 — The gate (Approvals page)
+## 0:25–0:50 — Departments and the ledger
 
-"Agents can only ask to spend. A deterministic policy gate decides: execute, hold for me, or deny. The rules live in
-code and config; the model never sees them." Open the held payout card: amount, payee, reason, the rule that held it.
-Approve it. Switch to the PayPal sandbox tab: the payout is there. "One payout per intent, ever: idempotency keys on
-every PayPal call."
+**Departments:** envelope gauges (spent, held, available) and each department's P&L, AI cost included.
+**Ledger:** "Every line is a double-entry posting with the agent, the run and the reason behind it. It's
+append-only, enforced in Postgres; corrections are reversing entries."
 
-## 1:30–2:00 — Agents can't be talked into stealing (Agents page)
+## 0:50–1:30 — The gate (Approvals)
 
-Agent scorecards with autonomy levels. "Agents earn autonomy from their ledger record and lose it on denials,
-refunds and reversals. I can pin any level." Mention the red-team suite: "We attacked it with prompt injection, forged
-approvals, split payments and payee swaps: 14 attacks, all held." Show a denied injection in the audit log.
+"Agents can only _ask_ to spend. A deterministic policy gate decides: execute, hold for me, or deny. The rules are
+code and config; the model never sees them."
 
-## 2:00–2:30 — CFO assistant (AG Studio)
+Open the held card: $90 to the contractor, rule `approval_threshold`, "over the $50 auto-approve limit (autonomy
+level 1)". Click **Approve**. "The gate re-checks every rule on the server, then pays." Switch to the PayPal sandbox
+tab: the payout is there. "One payout per intent, ever: idempotency keys on every PayPal call, so a retry or a
+double-click can't pay twice."
 
-Edit mode → AI Assistant: "Why did Growth overspend?" It answers from the ledger. Ask it to add a chart: the change
-appears with attribution and an Undo button.
+## 1:30–1:55 — Agents can't be talked into spending (Agents)
 
-## 2:30–2:50 — Schedule and reconciliation
+Scorecards: "Agents earn autonomy from their ledger record (accepted work up; denials, refunds and reversals down)
+and I can pin any level." "We attacked it with prompt injection, forged approvals, split payments and payee swaps:
+14 attacks, all held. In the seeded week a customer told Support to issue a refund; Support refused."
 
-Schedule page (Bryntum Gantt): "Finance plans the month; the same scheduling engine runs headless so the agent can move
-tasks." Reconciliation page: "Every night we reconcile the ledger against PayPal Transaction Search. Clean."
+## 1:55–2:25 — CFO (AG Studio Agent Framework)
+
+**Edit dashboard → AI** → prompt starter **"Why did Growth overspend?"** The panel shows **"Delegated to CFO"**:
+"Studio's built-in lead agent hands money questions to our CFO agent, which only has read-only ledger tools." Then
+ask it to add a chart: the change appears with attribution (which agent did what) and **Undo**.
+
+## 2:25–2:50 — Schedule and reconciliation
+
+**Schedule** (Bryntum Gantt): "Each expected payment is a milestone that gates what it pays for." Pick the INV-1042
+payment, set a date 3 days later and click **Payment slips to this date**: the launch, the contractor payout and the Q1
+milestone all move.
+"That recalculation ran on the server in our worker, the same path the Finance agent uses through one schedule
+tool. Agents never touch the UI." Move it back.
+
+**Reconciliation:** "Every night we reconcile the ledger against PayPal's Transaction Search, gross and fee to the
+cent." If an alert is open on the Overview: "Money PayPal reports that we can't attribute goes to suspense, never into
+the books. I can resolve it with a written reason, and that's audited too."
 
 ## 2:50–3:00 — Close
 
 "AgPal: agents run the company, PayPal moves the money, the founder stays in control."
+
+## Talking points if judges ask
+
+- **PayPal APIs:** Orders and Payments, Subscriptions and Transaction Search through the PayPal Server SDK (typed
+  models); Payouts, Invoicing, Disputes, Catalog and Webhooks through REST. See `docs/apimatic-plugin.md`.
+- **Safety:** integer cents only; append-only double-entry ledger; idempotency keys on every money call; spending
+  rules in code; secrets never logged or sent to a model; every action attributable (agent, run, reason).
+- **Reliability:** chaos tests for PayPal 5xx mid-capture, timeout mid-payout, a crash between hold and payout,
+  double-clicked approvals and concurrent spends; a recovery sweep every 5 minutes.

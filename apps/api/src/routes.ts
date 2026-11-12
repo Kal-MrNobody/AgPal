@@ -9,6 +9,7 @@ import {
   agentRuns,
   agents,
   alerts,
+  auditLog,
   approvals,
   reconciliationRuns,
   spendIntents,
@@ -91,6 +92,47 @@ export function registerReadRoutes(app: FastifyInstance, deps: RouteDeps): void 
       if (!apr) return reply.code(404).send({ error: 'not found' });
       await deps.services.gate.reject(apr.id, 'founder', req.body.note ?? '');
       return { status: 'rejected' };
+    },
+  );
+
+  /**
+   * Founder resolves an open alert (e.g. a webhook in suspense that belongs to no intent). Requires a written reason:
+   * unresolved suspense keeps reconciliation red, so clearing one is a deliberate, audited board decision. The money
+   * itself is untouched; nothing is booked or reversed here.
+   */
+  app.post<{ Params: { id: string }; Body: { note?: string } }>(
+    '/api/alerts/:id/resolve',
+    async (req, reply) => {
+      const co = await guard(req, reply);
+      if (!co) return reply;
+      const note = (req.body.note ?? '').trim();
+      if (note.length < 5) return reply.code(400).send({ error: 'a reason is required' });
+      const resolved = await deps.db.transaction(async (tx) => {
+        const [a] = await tx
+          .update(alerts)
+          .set({ resolvedAt: new Date() })
+          .where(
+            and(eq(alerts.id, req.params.id), eq(alerts.companyId, co), isNull(alerts.resolvedAt)),
+          )
+          .returning();
+        if (!a) return undefined;
+        await tx.insert(auditLog).values({
+          companyId: co,
+          actor: 'founder',
+          action: 'alert.resolved',
+          subjectType: 'alert',
+          subjectId: a.id,
+          data: {
+            kind: a.kind,
+            severity: a.severity,
+            message: a.message,
+            note: note.slice(0, 500),
+          },
+        });
+        return a;
+      });
+      if (!resolved) return reply.code(404).send({ error: 'no open alert with that id' });
+      return { status: 'resolved', alertId: resolved.id };
     },
   );
 

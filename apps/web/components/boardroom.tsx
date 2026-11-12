@@ -11,7 +11,7 @@ import {
 import { AgStudioAiModule } from 'ag-studio';
 import { AgStudio, AgStudioProvider } from 'ag-studio-react';
 import { buildCfo, type Attribution } from './ai/cfo';
-import { decideApproval, refreshData } from '../app/actions';
+import { decideApproval, refreshData, resolveAlert } from '../app/actions';
 import { boardroomWidgets } from '../widgets';
 import type { BoardroomContext, BoardroomRegistry } from '../widgets/registry';
 import { boardroomStore } from '../widgets/store';
@@ -44,6 +44,11 @@ export function Boardroom({ data, page }: { data: BoardroomData; page: PageId })
     () => ({
       decide: async (id, decision, note) => {
         const r = await decideApproval(id, decision, note);
+        boardroomStore.set(await refreshData());
+        return r;
+      },
+      resolveAlert: async (id, note) => {
+        const r = await resolveAlert(id, note);
         boardroomStore.set(await refreshData());
         return r;
       },
