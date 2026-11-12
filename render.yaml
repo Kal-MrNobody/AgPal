@@ -1,4 +1,5 @@
-# Render Blueprint for AgPal. New → Blueprint → connect this repo. Fill the `sync: false` values in the dashboard.
+# Render Blueprint for AgPal. Builds install devDependencies (tsx, typescript run the apps) despite NODE_ENV=production.
+# New → Blueprint → connect this repo. Fill the `sync: false` values in the dashboard.
 envVarGroups:
   - name: agpal-shared
     envVars:
@@ -24,6 +25,8 @@ envVarGroups:
         generateValue: true
       - key: AGPAL_CALLBACK_SECRET
         generateValue: true
+      - key: NODE_VERSION
+        value: '22'
       - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
         value: '0'
 
@@ -38,7 +41,7 @@ services:
     name: agpal-api
     runtime: node
     plan: starter
-    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    buildCommand: corepack enable && NODE_ENV=development pnpm install --frozen-lockfile
     # Expand-only migrations run before the new version takes traffic (zero downtime).
     preDeployCommand: pnpm db:migrate
     startCommand: API_PORT=$PORT pnpm --filter @agpal/api start
@@ -52,9 +55,9 @@ services:
     name: agpal-web
     runtime: node
     plan: starter
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @agpal/web build
+    buildCommand: corepack enable && NODE_ENV=development pnpm install --frozen-lockfile && pnpm --filter @agpal/web build
     startCommand: pnpm --filter @agpal/web exec next start -p $PORT
-    healthCheckPath: /login
+    healthCheckPath: /api/health
     envVars:
       - fromGroup: agpal-shared
       - key: AGPAL_API_HOSTPORT
@@ -64,7 +67,7 @@ services:
     name: agpal-worker
     runtime: node
     plan: starter
-    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    buildCommand: corepack enable && NODE_ENV=development pnpm install --frozen-lockfile
     startCommand: pnpm --filter @agpal/worker start
     envVars:
       - fromGroup: agpal-shared
@@ -76,7 +79,7 @@ services:
     runtime: node
     plan: starter
     schedule: '17 3 * * *'
-    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    buildCommand: corepack enable && NODE_ENV=development pnpm install --frozen-lockfile
     startCommand: pnpm reconcile --live --hours 48
     envVars:
       - fromGroup: agpal-shared
