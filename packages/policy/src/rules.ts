@@ -19,6 +19,8 @@ export interface Facts {
   payeeHasPriorPayout: boolean;
   /** Refunds: amount still refundable on the original capture; undefined if the capture is unknown. */
   refundableMinor?: bigint;
+  /** Price changes: the product's founder-set floor; undefined if the product is unknown. */
+  priceFloorMinor?: bigint;
   /** True when the founder is approving a held intent: hold rules no longer apply. */
   founderApproved?: boolean;
 }
@@ -45,7 +47,7 @@ export const drawsOnEnvelope = (action: SpendIntent['action']): boolean =>
 
 /** Actions that move no money themselves. */
 export const movesNoMoney = (action: SpendIntent['action']): boolean =>
-  action === 'price_change' || action === 'subscription_change';
+  action === 'price_change' || action === 'subscription_change' || action === 'dispute_accept';
 
 export function decide(config: PolicyConfig, intent: SpendIntent, f: Facts): Decision {
   // 1. Deny rules. Always evaluated, including at founder approval time.
@@ -107,6 +109,16 @@ export function decide(config: PolicyConfig, intent: SpendIntent, f: Facts): Dec
       return deny(
         'refund.over_captured',
         `${fmt(intent.amountMinor)} is more than the ${fmt(f.refundableMinor)} still refundable on the order.`,
+      );
+    }
+  }
+  if (intent.action === 'price_change') {
+    if (f.priceFloorMinor === undefined)
+      return deny('price.unknown_product', 'A price change must name a product in the catalog.');
+    if (intent.amountMinor < f.priceFloorMinor) {
+      return deny(
+        'price.below_floor',
+        `${fmt(intent.amountMinor)} is below the founder's ${fmt(f.priceFloorMinor)} floor for this product.`,
       );
     }
   }

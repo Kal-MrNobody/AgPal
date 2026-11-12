@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import type { Database } from '@agpal/db';
+import { and, eq } from 'drizzle-orm';
+import { tasks, type Database } from '@agpal/db';
 import type { Ledger } from '@agpal/ledger';
 import type { Gate, GateResult, SpendIntentInput } from '@agpal/policy';
 import type { AgentRecord } from './types.js';
@@ -93,6 +94,10 @@ export const coreTools: Tool[] = [
       category: z.string().min(1),
       reason: z.string().min(5).max(500),
       evidence_urls: z.array(z.url()).max(5).optional(),
+      task_id: z
+        .string()
+        .optional()
+        .describe('The commissioned task this pays for (links spend to its campaign)'),
     }),
     run: async (
       ctx,
@@ -102,18 +107,37 @@ export const coreTools: Tool[] = [
         category: string;
         reason: string;
         evidence_urls?: string[];
+        task_id?: string;
       },
-    ) =>
-      gateResult(
-        await submitIntent(ctx, {
-          action: 'payout',
-          amountMinor: String(a.amount_cents),
-          payee: a.payee_email,
-          category: a.category,
-          reason: a.reason,
-          evidence: a.evidence_urls ?? [],
-        }),
-      ),
+    ) => {
+      if (a.task_id) {
+        const [t] = await ctx.db
+          .select()
+          .from(tasks)
+          .where(and(eq(tasks.id, a.task_id), eq(tasks.companyId, ctx.agent.companyId)));
+        if (!t) return { error: 'Unknown task' };
+        if (t.contractorEmail && t.contractorEmail.toLowerCase() !== a.payee_email.toLowerCase())
+          return { error: 'This task was commissioned from a different contractor' };
+        if (BigInt(a.amount_cents) > t.budgetMinor)
+          return { error: `The agreed price for this task is ${t.budgetMinor} cents` };
+      }
+      const r = await submitIntent(ctx, {
+        action: 'payout',
+        amountMinor: String(a.amount_cents),
+        payee: a.payee_email,
+        category: a.category,
+        reason: a.reason,
+        evidence: a.evidence_urls ?? [],
+        details: a.task_id ? { taskId: a.task_id } : {},
+      });
+      if (a.task_id && ['executed', 'pending', 'held'].includes(r.status)) {
+        await ctx.db
+          .update(tasks)
+          .set({ status: 'accepted', updatedAt: new Date() })
+          .where(eq(tasks.id, a.task_id));
+      }
+      return gateResult(r);
+    },
   }),
   defineTool({
     name: 'request_allocation',

@@ -9,6 +9,7 @@ export const spendActions = [
   'allocation',
   'subscription_change',
   'price_change',
+  'dispute_accept',
 ] as const;
 export type SpendAction = (typeof spendActions)[number];
 

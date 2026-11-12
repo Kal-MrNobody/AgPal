@@ -7,6 +7,7 @@ import {
   domainEvents,
   payees,
   policyConfigs,
+  products,
   spendIntents,
   type Database,
   type DbOrTx,
@@ -257,6 +258,20 @@ export class Gate {
 
   /** Founder approves a held intent. Deny rules are re-checked first. */
   async approve(approvalId: string, by: string, note = ''): Promise<GateResult> {
+    const [peek] = await this.db.select().from(approvals).where(eq(approvals.id, approvalId));
+    if (peek?.intentId.startsWith('prop_')) {
+      await this.decideProposal(approvalId, true, by, note);
+      return {
+        intentId: peek.intentId,
+        decision: {
+          outcome: 'approve',
+          rule: 'founder.approved',
+          explanation: 'Proposal approved by the founder.',
+        },
+        status: 'executed',
+        approvalId,
+      };
+    }
     const prepared = await this.db.transaction(async (tx) => {
       const [apr] = await tx
         .select()
@@ -367,8 +382,88 @@ export class Gate {
       .onConflictDoNothing();
   }
 
+  /**
+   * A non-money proposal for the founder (new contractor, policy change). Lands in the approvals queue; approving
+   * it never moves money. Approving a contractor proposal adds the payee to the allow-list.
+   */
+  async propose(i: {
+    companyId: string;
+    agentId: string;
+    runId: string;
+    department: string;
+    kind: 'contractor' | 'policy';
+    summary: string;
+    payload: Record<string, unknown>;
+  }): Promise<string> {
+    const id = newId('apr');
+    const proposalId = newId('prop');
+    await this.db.insert(approvals).values({
+      id,
+      companyId: i.companyId,
+      intentId: proposalId,
+      intent: {
+        action: `proposal_${i.kind}`,
+        amountMinor: '0',
+        envelope: i.department,
+        agentId: i.agentId,
+        runId: i.runId,
+        reason: i.summary,
+        payload: i.payload,
+      },
+      rule: `proposal.${i.kind}`,
+      explanation: i.summary,
+    });
+    await this.audit(
+      this.db,
+      i.companyId,
+      i.agentId,
+      `proposal.${i.kind}`,
+      'proposal',
+      proposalId,
+      i.payload,
+      i.runId,
+    );
+    return id;
+  }
+
+  /** Founder decides a proposal. */
+  async decideProposal(approvalId: string, approve: boolean, by: string, note = ''): Promise<void> {
+    const [apr] = await this.db.select().from(approvals).where(eq(approvals.id, approvalId));
+    if (apr?.status !== 'pending' || !apr.intentId.startsWith('prop_')) return;
+    const p = apr.intent as {
+      action: string;
+      envelope: string;
+      payload?: { email?: string; name?: string };
+    };
+    if (approve && p.action === 'proposal_contractor' && p.payload?.email) {
+      await this.allowPayee(apr.companyId, p.payload.email, p.payload.name ?? p.payload.email, by);
+    }
+    await this.db
+      .update(approvals)
+      .set({
+        status: approve ? 'approved' : 'rejected',
+        decidedBy: by,
+        note,
+        decidedAt: this.now(),
+      })
+      .where(eq(approvals.id, approvalId));
+    await this.publishDecision(
+      this.db,
+      apr.companyId,
+      apr.intentId,
+      p.envelope,
+      approve ? 'approved' : 'rejected',
+      note,
+    );
+  }
+
   /** Founder denies a held intent. */
   async reject(approvalId: string, by: string, note = ''): Promise<void> {
+    const [peek] = await this.db.select().from(approvals).where(eq(approvals.id, approvalId));
+    if (peek?.intentId.startsWith('prop_')) {
+      await this.decideProposal(approvalId, false, by, note);
+      return;
+    }
     await this.db.transaction(async (tx) => {
       const [apr] = await tx
         .select()
@@ -555,7 +650,20 @@ export class Gate {
         });
         return { status: 'executed', externalRef: r.refundId };
       }
-      case 'price_change':
+      case 'price_change': {
+        const productId =
+          typeof intent.details.productId === 'string' ? intent.details.productId : '';
+        await this.db
+          .update(products)
+          .set({ priceMinor: intent.amountMinor, updatedAt: this.now() })
+          .where(and(eq(products.id, productId), eq(products.companyId, intent.companyId)));
+        return { status: 'executed', externalRef: productId };
+      }
+      case 'dispute_accept': {
+        const disputeId = intent.payee ?? '';
+        await this.payments.acceptDisputeClaim(disputeId, intent.reason.slice(0, 2000), intentId);
+        return { status: 'executed', externalRef: disputeId };
+      }
       case 'subscription_change':
         return { status: 'executed' };
     }
@@ -796,6 +904,15 @@ export class Gate {
       payeeAllowlisted,
       payeeHasPriorPayout,
     };
+    if (intent.action === 'price_change') {
+      const productId =
+        typeof intent.details.productId === 'string' ? intent.details.productId : '';
+      const [p] = await tx
+        .select()
+        .from(products)
+        .where(and(eq(products.id, productId), eq(products.companyId, intent.companyId)));
+      if (p) facts.priceFloorMinor = p.floorMinor;
+    }
     if (intent.action === 'refund' && intent.payee) {
       const refundable = await this.refundable(tx, intent.companyId, intent.payee, excludeIntentId);
       if (refundable !== undefined) facts.refundableMinor = refundable;

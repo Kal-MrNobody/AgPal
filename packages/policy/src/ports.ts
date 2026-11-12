@@ -43,6 +43,8 @@ export interface RefundResult {
 export interface PaymentsPort {
   payout(req: PayoutRequest): Promise<PayoutResult>;
   refund(req: RefundRequest): Promise<RefundResult>;
+  /** Accept a customer's dispute claim (refunds them through PayPal). */
+  acceptDisputeClaim(disputeId: string, note: string, idempotencyKey: string): Promise<void>;
 }
 
 /** Deterministic in-memory provider. Never touches the network. */
@@ -70,6 +72,13 @@ export class FakePayments implements PaymentsPort {
       itemStatus: 'SUCCESS',
       feeMinor: this.payoutFee(req.amountMinor),
     });
+  }
+
+  readonly acceptedDisputes: string[] = [];
+
+  acceptDisputeClaim(disputeId: string): Promise<void> {
+    if (!this.acceptedDisputes.includes(disputeId)) this.acceptedDisputes.push(disputeId);
+    return Promise.resolve();
   }
 
   refund(req: RefundRequest): Promise<RefundResult> {

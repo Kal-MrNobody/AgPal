@@ -51,6 +51,10 @@ export class PayPalPayments implements PaymentsPort {
     }
   }
 
+  acceptDisputeClaim(disputeId: string, note: string, idempotencyKey: string): Promise<void> {
+    return this.paypal.acceptDisputeClaim(disputeId, note, idempotencyKey);
+  }
+
   async refund(req: RefundRequest): Promise<RefundResult> {
     const r = await this.paypal.refundCapture({
       captureId: req.captureId,

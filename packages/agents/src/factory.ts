@@ -4,6 +4,7 @@ import { Coordination, coordinationTools } from './coordination.js';
 import { loadModelConfig, type ModelConfig } from './models.js';
 import { OpenAIProvider, type ModelProvider } from './provider.js';
 import { AgentRuntime, type RuntimeDeps } from './runtime.js';
+import { departmentTools } from './departments.js';
 import { coreTools, type Tool } from './tools.js';
 
 /** Build the runtime from config: model provider and tiers from AGPAL_MODELS_JSON, tools from the registry. */
@@ -28,7 +29,9 @@ export function createAgentRuntime(
     });
   const coordination = new Coordination(db, services.gate);
   const tools = new Map(
-    [...coreTools, ...coordinationTools, ...(opts.extraTools ?? [])].map((t) => [t.name, t]),
+    [...coreTools, ...coordinationTools, ...departmentTools, ...(opts.extraTools ?? [])].map(
+      (t) => [t.name, t],
+    ),
   );
   const runtime = new AgentRuntime({
     db,

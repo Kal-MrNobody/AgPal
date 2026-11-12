@@ -16,7 +16,19 @@ export class Commerce {
       PayPal,
       'createOrder' | 'captureOrder' | 'createAndCaptureSandboxCardOrder'
     > &
-      Partial<Pick<PayPal, 'createProduct' | 'createMonthlyPlan' | 'createSubscription'>>,
+      Partial<
+        Pick<
+          PayPal,
+          | 'createProduct'
+          | 'createMonthlyPlan'
+          | 'createSubscription'
+          | 'createInvoice'
+          | 'sendInvoice'
+          | 'remindInvoice'
+          | 'provideDisputeEvidence'
+          | 'getDispute'
+        >
+      >,
   ) {}
 
   /** Create a catalog product (digital goods). */
@@ -63,6 +75,50 @@ export class Commerce {
       customId: `agpal:${companyId}:${reference}`,
       requestId: `sub:${companyId}:${reference}`,
     });
+  }
+
+  /** Create and send a PayPal invoice for custom work. Returns the PayPal invoice id. */
+  async invoiceCustomer(i: {
+    companyId: string;
+    payerEmail: string;
+    items: { name: string; quantity: number; unitAmountMinor: bigint }[];
+    note?: string;
+    dueInDays?: number;
+    reference: string;
+  }): Promise<{ id: string; status: string }> {
+    if (!this.paypal.createInvoice || !this.paypal.sendInvoice)
+      throw new Error('invoicing not available');
+    const inv = await this.paypal.createInvoice({
+      requestId: `invoice:${i.companyId}:${i.reference}`,
+      payerEmail: i.payerEmail,
+      currency: 'USD',
+      items: i.items,
+      ...(i.note ? { note: i.note } : {}),
+      ...(i.dueInDays ? { dueInDays: i.dueInDays } : {}),
+      reference: `agpal:${i.companyId}:${i.reference}`,
+    });
+    await this.paypal.sendInvoice(inv.id, `invoice-send:${inv.id}`);
+    return { id: inv.id, status: 'SENT' };
+  }
+
+  async remindInvoice(invoiceId: string, note: string): Promise<void> {
+    if (!this.paypal.remindInvoice) throw new Error('invoicing not available');
+    await this.paypal.remindInvoice(
+      invoiceId,
+      `invoice-remind:${invoiceId}:${new Date().toISOString().slice(0, 10)}`,
+      note,
+    );
+  }
+
+  /** Submit dispute evidence (text). Not a money movement; accepting a claim goes through the gate. */
+  async submitDisputeEvidence(disputeId: string, notes: string): Promise<void> {
+    if (!this.paypal.provideDisputeEvidence) throw new Error('disputes not available');
+    await this.paypal.provideDisputeEvidence(disputeId, { notes });
+  }
+
+  async getDispute(disputeId: string): Promise<unknown> {
+    if (!this.paypal.getDispute) throw new Error('disputes not available');
+    return this.paypal.getDispute(disputeId);
   }
 
   /** A checkout link for a customer (PAY_NOW, NO_SHIPPING). */

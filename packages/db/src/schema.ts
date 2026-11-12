@@ -493,3 +493,56 @@ export const internalInvoices = pgTable(
   },
   (t) => [index('internal_invoices_buyer').on(t.companyId, t.buyerDepartment, t.status)],
 );
+
+/** The company's catalog (Revenue). Price floors are config the agent cannot change (invariant 5). */
+export const products = pgTable(
+  'products',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    name: text('name').notNull(),
+    description: text('description').notNull().default(''),
+    /** one_off | subscription */
+    kind: text('kind').notNull(),
+    priceMinor: bigint('price_minor', { mode: 'bigint' }).notNull(),
+    /** No price or discount may go below this. */
+    floorMinor: bigint('floor_minor', { mode: 'bigint' }).notNull(),
+    paypalProductId: text('paypal_product_id'),
+    paypalPlanId: text('paypal_plan_id'),
+    active: boolean('active').notNull().default(true),
+    createdAt: createdAt(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('products_company').on(t.companyId)],
+);
+
+/** Customer orders: what was sold, to whom, for how much, and delivery/access evidence (Support, disputes). */
+export const orders = pgTable(
+  'orders',
+  {
+    id: text('id').primaryKey(),
+    companyId: text('company_id').notNull(),
+    productId: text('product_id').notNull(),
+    customerEmail: text('customer_email').notNull(),
+    paypalOrderId: text('paypal_order_id'),
+    captureId: text('capture_id'),
+    subscriptionId: text('subscription_id'),
+    grossMinor: bigint('gross_minor', { mode: 'bigint' }).notNull(),
+    currency: text('currency').notNull().default('USD'),
+    /** Growth attribution: campaign code from the checkout link. */
+    campaign: text('campaign'),
+    /** pending | paid | refunded | partially_refunded | disputed */
+    status: text('status').notNull().default('pending'),
+    /** Delivery and access log entries (download link issued, downloads, logins) for dispute evidence. */
+    accessLog: jsonb('access_log')
+      .$type<{ at: string; event: string; detail?: string }[]>()
+      .notNull()
+      .default([]),
+    simulated: boolean('simulated').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index('orders_capture').on(t.captureId),
+    index('orders_company').on(t.companyId, t.createdAt),
+  ],
+);

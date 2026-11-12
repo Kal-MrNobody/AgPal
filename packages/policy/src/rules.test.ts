@@ -172,15 +172,23 @@ describe('decide (other actions)', () => {
     );
   });
 
-  it('every price change is held', () => {
-    const pc = spendIntentSchema.parse({
-      ...base,
-      envelope: 'revenue',
-      action: 'price_change',
-      amountMinor: '1900',
-      category: 'pricing',
-    });
-    expect(decide(config, pc, baseFacts).rule).toBe('always_hold');
+  it('every price change is held, and none may go below the founder floor', () => {
+    const pc = (amount: string) =>
+      spendIntentSchema.parse({
+        ...base,
+        envelope: 'revenue',
+        action: 'price_change',
+        amountMinor: amount,
+        category: 'pricing',
+        details: { productId: 'p1' },
+      });
+    expect(decide(config, pc('1900'), { ...baseFacts, priceFloorMinor: 1500n }).rule).toBe(
+      'always_hold',
+    );
+    expect(decide(config, pc('1499'), { ...baseFacts, priceFloorMinor: 1500n }).rule).toBe(
+      'price.below_floor',
+    );
+    expect(decide(config, pc('1900'), baseFacts).rule).toBe('price.unknown_product');
   });
 
   it('allocations need a target and respect the auto-approve limit', () => {

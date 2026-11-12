@@ -9,3 +9,4 @@ export * from './runtime.js';
 export * from './factory.js';
 export * from './coordination.js';
 export * from './wake.js';
+export * from './departments.js';

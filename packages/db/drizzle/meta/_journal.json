@@ -36,6 +36,13 @@
       "when": 1794486979637,
       "tag": "0004_coordination",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794487200739,
+      "tag": "0005_catalog_orders",
+      "breakpoints": true
     }
   ]
 }

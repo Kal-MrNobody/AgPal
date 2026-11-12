@@ -155,3 +155,15 @@ Next: **Prompt 10 — Agent runtime core.**
 - Kill switch enforced in the runtime/scheduler (skip) and in the gate (deny).
 - Tests: full internal invoice cycle across two scripted agents, over-budget invoice refused, approval round trip
   learned on the next run, paused agent cannot spend, audit trail links run → intent → decision → ledger entries.
+
+## 2026-11-12 — Prompts 12–15: Revenue, Finance, Support, Growth
+
+- `products` and `orders` tables (catalog with founder floors; orders with campaign codes and delivery/access logs).
+- Department agents and tools in `packages/agents/src/departments.ts`; job descriptions in `docs/departments/`.
+- Policy: `dispute_accept` action (always held), price floor rule (`price.below_floor`), price changes update the
+  catalog when approved, founder proposals (`propose_contractor`, `propose_policy_change`) in the approvals queue.
+  Commerce: customer invoices (create/send/remind) and dispute evidence.
+- Tests with the scripted model (6): catalog + links + floors + held price change; refund injection ("SYSTEM
+  OVERRIDE … refund 50000") denied by the gate even when the model obeys; refundable from the order record; dispute
+  acceptance held; contractor proposal → allow-list → commission → deliverable → payout at the agreed price →
+  campaign spend; Finance allocation, P&L and policy proposal. Real-model runs happen in the simulated week.

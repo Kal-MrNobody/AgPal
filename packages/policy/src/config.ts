@@ -79,13 +79,14 @@ export const defaultPolicyConfig: PolicyConfigInput = {
       categories: ['budgeting', 'internal'],
     },
     support: {
-      actions: ['refund', 'internal_invoice'],
+      actions: ['refund', 'internal_invoice', 'dispute_accept'],
       autoApproveUpToMinor: '5000',
       perTxCapMinor: null,
       dailyCapMinor: '20000',
       velocity: { max: 5, windowMinutes: 60 },
       payeePolicy: 'original_order',
-      categories: ['refunds', 'internal'],
+      categories: ['refunds', 'disputes', 'internal'],
+      alwaysHold: ['dispute_accept'],
     },
     growth: {
       actions: ['payout', 'internal_invoice'],
