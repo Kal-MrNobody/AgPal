@@ -119,3 +119,7 @@ How we used the APIMatic-generated PayPal Server SDK and where we went to thin R
   Runbook: [docs/runbook.md](docs/runbook.md) · Department mandates: [docs/departments/](docs/departments/)
 - Stack: pnpm workspaces + Turborepo, TypeScript strict, Next.js 16, Fastify 5, pg-boss, Drizzle + Postgres 17,
   Vitest, PayPal Server SDK, OpenAI Responses API.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
