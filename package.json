@@ -17,7 +17,8 @@
     "db:down": "docker compose down",
     "webhook:tunnel": "pnpm --filter @agpal/api webhook:tunnel",
     "db:migrate": "pnpm --filter @agpal/db db:migrate",
-    "webhooks:pull": "pnpm --filter @agpal/worker webhooks:pull"
+    "webhooks:pull": "pnpm --filter @agpal/worker webhooks:pull",
+    "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm test"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

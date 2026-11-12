@@ -8,7 +8,7 @@ import {
   normalizeRefund,
   type Capture,
 } from '@agpal/paypal';
-import { isCurrency, newId, parseDecimal, type Currency } from '@agpal/shared';
+import { isCurrency, newId, parseDecimal } from '@agpal/shared';
 import type { Commerce } from './commerce.js';
 import type { Gate } from './gate.js';
 import type { PayPalInbound } from './inbound.js';

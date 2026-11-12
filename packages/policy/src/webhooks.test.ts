@@ -44,7 +44,7 @@ describe.runIf(hasDb)('WebhookProcessor', () => {
       ledger,
       gate,
       commerce,
-      { getCapture: () => Promise.reject(new Error('unused')) as Promise<Capture> },
+      { getCapture: () => Promise.reject<Capture>(new Error('unused')) },
       { defaultCompanyId: co },
     );
     await ledger.setupCompany({ id: co, name: 'Shop', currency: 'USD', departments: DEPTS });
