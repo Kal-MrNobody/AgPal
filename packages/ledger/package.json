@@ -12,7 +12,9 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@agpal/shared": "workspace:*"
+    "@agpal/shared": "workspace:*",
+    "@agpal/db": "workspace:*",
+    "drizzle-orm": "0.45.4"
   },
   "devDependencies": {
     "fast-check": "4.10.2"

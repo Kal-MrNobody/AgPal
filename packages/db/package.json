@@ -4,14 +4,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "node --env-file-if-exists=../../.env --import tsx src/migrate-cli.ts"
   },
   "dependencies": {
     "@agpal/shared": "workspace:*",

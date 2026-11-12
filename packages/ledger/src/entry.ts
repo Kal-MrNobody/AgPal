@@ -22,7 +22,11 @@ export interface JournalEntryDraft {
   reverses?: string;
 }
 
-export class UnbalancedEntryError extends Error {
+export class LedgerError extends Error {
+  override name = 'LedgerError';
+}
+
+export class UnbalancedEntryError extends LedgerError {
   override name = 'UnbalancedEntryError';
 }
 

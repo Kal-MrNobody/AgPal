@@ -43,3 +43,15 @@ Next: **Prompt 2 — Money constitution (interview first).**
 - Interview skipped at the founder's request; assumptions A1–A8 are listed in §0 of the constitution.
 - Sandbox facts confirmed: card `payment_source` orders capture without buyer approval (fee
   2.59% + $0.49 observed), treasury available balance $5,000.00. OpenAI key injected by the proxy.
+
+## 2026-11-12 — Prompt 3: Database and ledger
+
+- Drizzle schema + migrations (`packages/db/drizzle`): companies, departments, accounts, journal_entries,
+  postings, envelopes, holds, payees, idempotency_keys, audit_log, plus approvals, spend_intents,
+  policy_configs and agent_controls for the gate. Custom migration adds append-only triggers, a
+  deferred balanced-entry trigger and balance-rule CHECKs.
+- `Ledger`: setupCompany (chart of accounts + envelopes), post (idempotent, row-locked), reverse
+  (once), balance (incl. point-in-time), envelope (balance/held/available), placeHold / releaseHold /
+  convertHold.
+- Tests (real Postgres, throwaway DB per file): worked week reproduced step by step; concurrency;
+  DB guards; fast-check property test. CI now runs a Postgres service.

@@ -11,3 +11,6 @@ export interface Attribution {
   runId: string;
   reason: string;
 }
+
+/** Prefixed random id, e.g. `je_3f2a...`. */
+export const newId = (prefix: string): string => `${prefix}_${randomUUID().replaceAll('-', '')}`;

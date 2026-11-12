@@ -43,3 +43,21 @@ alongside `packages/shared/src/env.ts`.
 
 pnpm 12 refuses to install when dependency build scripts are not approved. Only `esbuild` (needed by
 tsx and drizzle-kit) is allowed, in `pnpm-workspace.yaml` `allowBuilds`.
+
+## ADR-007: Ledger concurrency with row locks, not SERIALIZABLE (2026-11-12)
+
+**Context.** Two spends on one envelope must not both pass if together they exceed it.
+**Options.** (a) SERIALIZABLE transactions with retry on serialization failure; (b) READ COMMITTED with
+`SELECT … FOR UPDATE` on the affected account rows.
+**Decision.** (b). Every posting locks its account rows in a stable order (by id), updates a cached
+`balance_minor` and checks the balance rule and active holds before commit. `placeHold` locks the
+envelope's account row before summing holds. Contention is per account, never global; no retry loop is
+needed, and failures are deterministic `InsufficientFundsError`s rather than serialization retries.
+Defense in depth: a `CHECK` constraint on the cached balance, append-only triggers, and a deferred
+constraint trigger that rejects unbalanced entries even if code is bypassed.
+
+## ADR-008: Entry idempotency in the ledger (2026-11-12)
+
+`journal_entries` has a unique `(company_id, idempotency_key)`. `post` returns the existing entry with
+`duplicate: true` instead of posting twice, including under concurrent retries (unique-violation path).
+Reversals use the key `reversal:<entryId>`, and a unique index allows one reversal per entry.
