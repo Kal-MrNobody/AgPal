@@ -6,7 +6,7 @@ import { studioTheme } from 'ag-studio';
  */
 const v = (name: string) => `var(--${name})`;
 const palette = Object.fromEntries(
-  ['#0070e0', '#00a3a3', '#f2a900', '#7b61ff', '#e5484d', '#3b9b5c', '#8a94a6', '#ff7a45'].flatMap(
+  ['#0f7b5f', '#3a6ea5', '#b8892b', '#7b5ea7', '#c2410c', '#2a9d8f', '#13213b', '#9a8c73'].flatMap(
     (c, i) => [
       [`chartPaletteFills${i + 1}Color`, c],
       [`chartPaletteStrokes${i + 1}Color`, c],
@@ -15,7 +15,7 @@ const palette = Object.fromEntries(
 );
 
 export const boardroomTheme = studioTheme.withParams({
-  fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
+  fontFamily: v('font-sans'),
   fontSize: 13,
   textColor: v('ink'),
   foregroundColor: v('ink'),
@@ -31,10 +31,11 @@ export const boardroomTheme = studioTheme.withParams({
   studioCanvasPadding: 12,
   studioWidgetBackgroundColor: v('panel'),
   studioWidgetBorder: { width: 1, color: v('line') },
-  studioWidgetBorderRadius: 10,
+  studioWidgetBorderRadius: 4,
   studioWidgetPadding: 10,
-  studioWidgetTitleFontSize: 14,
-  studioWidgetTitleFontWeight: 600,
+  studioWidgetTitleFontSize: 15,
+  studioWidgetTitleFontWeight: 700,
+  studioWidgetTitleFontFamily: v('font-display'),
   studioWidgetTitleTextColor: v('ink'),
   ...palette,
 });

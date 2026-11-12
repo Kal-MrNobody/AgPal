@@ -313,3 +313,15 @@ Next: **Prompt 10 — Agent runtime core.**
   Context Plugin skills, Bryntum server-side schedule tool + payment milestones + worker headless recalculation,
   AG Studio built-in lead + read-only CFO agent + gate-rechecked approval card, Money flow Sankey + distinctive
   theme). Conflicts with the current code listed for the founder; nothing changed in code yet.
+
+## 2026-11-12 — Conflicts with ADR-016…020 fixed
+
+- `.claude/settings.json`: `.env` deny rules now also cover Write/Grep and shell readers (head, tail, grep, sed, …).
+- Bryntum: one `schedule` agent tool; founder edits run in the worker (`schedule.apply` queue, API waits for the
+  result); engine loader prefers `gantt.node.mjs`, then the public package model, then the unconfirmed browser
+  fallback (flagged in the Gantt). Tests for the tool, the fallback and its recovery.
+- AG Studio: the built-in lead fronts the conversation and delegates to a read-only custom CFO agent (verified in
+  the browser: "Delegated to CFO").
+- PayPal: SDK responses read through typed models (`typed.ts`) into the one validating normalizer; verified live in
+  the sandbox (capture, refund, payout, Transaction Search, balances).
+- Money flow Sankey widget (Overview) and the private-bank-ledger theme.

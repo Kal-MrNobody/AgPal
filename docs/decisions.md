@@ -106,7 +106,7 @@ spends cannot overdraw the envelope; a budget guard stops further steps once hal
 run the hold is converted into the constitution §2.8 entry for the exact cost (micro-dollars from token usage ×
 configured prices, rounded up to the cent). Prices and model names are config (`AGPAL_MODELS_JSON`), never code.
 
-## ADR-015: Bryntum — headless engine on the server, browser displays only (2026-11-12)
+## ADR-015: Bryntum — headless engine on the server, browser displays only (2026-11-12) — superseded by ADR-018
 
 The headless path works (no fallback needed): `ProjectModel` from `@bryntum/gantt-enterprise@8.0.1` runs in Node in
 trial mode. All schedule changes go through `ScheduleService.apply()` on the server (agents and founder edits alike);
@@ -155,6 +155,9 @@ if the built-in lead cannot delegate to custom agents in 3.1. The Approval card 
 re-checked by the gate on the server.
 Reason: use the framework as designed (judged on AG Studio usage) and keep a hand-written lead only where 3.1 forces
 it; a widget button is UI, so authority must stay in the server-side gate.
+Implementation (2026-11-12): verified that 3.1 allows it. Built-in agents are plain definitions, so the built-in lead
+is spread and its `delegate_to` is extended with `cfo`; no fallback lead was needed. In the browser, "Why did Growth
+overspend?" shows "Delegated to CFO" and is answered from the CFO's read-only tools.
 
 ## ADR-020: AG Studio — signature "Money flow" Sankey and a distinctive theme (2026-11-12)
 

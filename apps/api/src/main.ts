@@ -6,8 +6,10 @@ import {
   TelegramChannel,
   type TelegramUpdate,
 } from '@agpal/policy';
+import { SCHEDULE_QUEUE, type ScheduleJobResult } from '@agpal/schedule';
 import { loadEnv } from '@agpal/shared';
 import { registerReadRoutes } from './routes.js';
+import { runAndWait } from './run-job.js';
 import { buildServer } from './server.js';
 
 const env = loadEnv();
@@ -23,6 +25,7 @@ boss.on('error', (err: unknown) => {
 });
 await boss.start();
 await boss.createQueue('webhook.paypal', { retryLimit: 8, retryDelay: 5, retryBackoff: true });
+await boss.createQueue(SCHEDULE_QUEUE, { retryLimit: 0 });
 
 const app = buildServer({
   logLevel: env.LOG_LEVEL,
@@ -94,6 +97,8 @@ const app = buildServer({
       ...(env.AGPAL_COMPANY_ID ? { companyId: env.AGPAL_COMPANY_ID } : {}),
       ...(env.AGPAL_ADMIN_TOKEN ? { adminToken: env.AGPAL_ADMIN_TOKEN.reveal() } : {}),
       ...(env.OPENAI_API_KEY ? { openaiApiKey: env.OPENAI_API_KEY.reveal() } : {}),
+      // Founder Gantt edits are recalculated by the worker's headless engine (ADR-018).
+      scheduleChange: (job) => runAndWait<ScheduleJobResult>(boss, SCHEDULE_QUEUE, job),
     });
   },
 });

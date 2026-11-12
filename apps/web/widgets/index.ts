@@ -3,12 +3,25 @@ import AgentScorecard from './agent-scorecard';
 import ApprovalCard from './approval-card';
 import EnvelopeGauge from './envelope-gauge';
 import LedgerGrid from './ledger-grid';
+import MoneyFlow from './money-flow';
 import type { BoardroomRegistry } from './registry';
 
 /** Custom boardroom widgets, added to Studio's widget menu under "AgPal". */
 export const boardroomWidgets = () =>
   createWidgets<BoardroomRegistry>({
     additionalTypes: [
+      {
+        id: 'moneyFlow',
+        label: 'Money flow',
+        form: (params) => params.createDefaults({ dataMappingItems: [] }),
+        comp: MoneyFlow,
+        defaultSize: { width: 1100, height: 460 },
+        minSize: { width: 480, height: 280 },
+        ai: {
+          description:
+            "Signature Sankey of the company's money from the ledger: customers and founder → treasury → department envelopes → payees, with PayPal fees, AI cost, refunds and internal invoices as their own flows.",
+        },
+      },
       {
         id: 'envelopeGauge',
         label: 'Envelope gauge',
@@ -82,7 +95,7 @@ export const boardroomWidgets = () =>
     menu: [
       {
         label: 'AgPal',
-        widgetIds: ['envelopeGauge', 'approvalCard', 'agentScorecard', 'ledgerGrid'],
+        widgetIds: ['moneyFlow', 'envelopeGauge', 'approvalCard', 'agentScorecard', 'ledgerGrid'],
       },
     ],
   });

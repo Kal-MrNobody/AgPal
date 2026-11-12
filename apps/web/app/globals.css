@@ -1,10 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+
+/*
+ * Boardroom theme (ADR-020): a private-bank ledger. Warm ledger paper, deep ink, emerald for money in, brass for
+ * money held/out, Fraunces for headings and figures, IBM Plex for text and tabular amounts. Every Studio, grid,
+ * chart and Gantt colour points at these tokens.
+ */
 :root {
-  --bg: #f6f7fb;
-  --panel: #ffffff;
-  --ink: #0b1b3f;
-  --muted: #5b6785;
-  --line: #e3e7f0;
-  --accent: #0070e0;
+  --bg: #f3eee4;
+  --panel: #fffdf8;
+  --ink: #13213b;
+  --muted: #6a6457;
+  --line: #e2d9c6;
+  --accent: #0f7b5f;
+  --brass: #b8892b;
+  --warn: #c2410c;
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  /* Money flow (Sankey) link colours by flow kind. */
+  --flow-funding: #13213b;
+  --flow-sale: #0f7b5f;
+  --flow-allocation: #3a6ea5;
+  --flow-payout: #b8892b;
+  --flow-internal: #7b5ea7;
+  --flow-ai: #2a9d8f;
+  --flow-fees: #9a8c73;
+  --flow-refund: #c2410c;
   color-scheme: light;
 }
 * {
@@ -14,14 +35,22 @@ html,
 body {
   margin: 0;
   height: 100%;
-  background: var(--bg);
+  background:
+    linear-gradient(transparent 27px, rgb(19 33 59 / 0.035) 28px) 0 0 / 100% 28px,
+    var(--bg);
   color: var(--ink);
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: 'tnum' 1;
+}
+h1,
+h2,
+h3,
+.brand {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+.money-flow {
+  font-family: var(--font-sans);
 }
 .shell {
   display: grid;
@@ -38,8 +67,11 @@ body {
 }
 .brand {
   font-weight: 700;
-  font-size: 20px;
+  font-size: 24px;
   margin: 0 8px 16px;
+  color: #f3e7c9;
+  border-bottom: 1px solid rgb(184 137 43 / 0.5);
+  padding-bottom: 12px;
 }
 .navlink {
   color: #cfd8ee;
@@ -50,6 +82,7 @@ body {
 .navlink:hover {
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
+  box-shadow: inset 3px 0 0 var(--brass);
 }
 .content {
   display: flex;
@@ -346,4 +379,14 @@ body {
 }
 .unstaffed {
   outline: 2px dashed #e5484d;
+}
+
+/* ADR-018 fallback: dates computed in the browser, not yet confirmed by the server engine. */
+.b-gantt-task.unconfirmed .b-gantt-task-content {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 6px,
+    rgb(255 255 255 / 0.35) 6px 12px
+  );
+  outline: 2px dashed var(--warn, #f2a900);
 }

@@ -247,6 +247,9 @@ importers:
       '@bryntum/scheduler-react-enterprise':
         specifier: 8.0.1
         version: 8.0.1
+      ag-charts-enterprise:
+        specifier: 14.3.0
+        version: 14.3.0
       ag-grid-community:
         specifier: 36.3.0
         version: 36.3.0

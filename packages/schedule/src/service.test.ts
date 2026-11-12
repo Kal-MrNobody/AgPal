@@ -72,4 +72,55 @@ describe.runIf(hasDb)('ScheduleService (server-side recalculation, no browser)',
       ),
     ).rejects.toThrow(/not a payment milestone/);
   });
+
+  it('engine fallback (ADR-018): the change is stored, downstream dates are flagged unconfirmed for the browser', async () => {
+    const svc = new ScheduleService(t.db);
+    const co = 'co_fallback';
+    await svc.seedDemo(co, new Date('2026-11-16T00:00:00Z'));
+    const rows = await t.db.select().from(scheduleTasks).where(eq(scheduleTasks.companyId, co));
+    const payment = rows.find((x) => x.ref === 'INV-1042');
+    const launch = rows.find((x) => x.name.startsWith('Launch'));
+    process.env.AGPAL_SCHEDULE_ENGINE = 'browser';
+    try {
+      const r = await svc.apply(
+        co,
+        { kind: 'shift_payment', taskId: payment?.id ?? '', newDate: '2026-11-24' },
+        { kind: 'founder', reason: 'drill' },
+      );
+      expect(r.engine).toBe('browser-fallback');
+      expect(r.changed).toContain(launch?.id);
+    } finally {
+      delete process.env.AGPAL_SCHEDULE_ENGINE;
+    }
+    const after = await t.db.select().from(scheduleTasks).where(eq(scheduleTasks.companyId, co));
+    const p = after.find((x) => x.id === payment?.id);
+    expect(p?.constraintDate?.toISOString().slice(0, 10)).toBe('2026-11-24');
+    expect(p?.confirmed).toBe(true);
+    expect(after.find((x) => x.id === launch?.id)?.confirmed).toBe(false);
+    const load = await svc.crudLoad(co);
+    const row = load.tasks.rows.find((x) => x.id === launch?.id);
+    expect(row).toMatchObject({ manuallyScheduled: false, confirmed: false });
+    expect(row?.cls).toContain('unconfirmed');
+    const [audit] = await t.db
+      .select()
+      .from(auditLog)
+      .where(
+        and(
+          eq(auditLog.subjectId, payment?.id ?? ''),
+          eq(auditLog.action, 'schedule.shift_payment'),
+        ),
+      );
+    expect(audit?.data).toMatchObject({ engine: 'browser-fallback' });
+
+    // Once the server engine is back, the next recalculation confirms everything again.
+    await svc.apply(co, null, { kind: 'system', reason: 'engine back' });
+    const healed = await t.db.select().from(scheduleTasks).where(eq(scheduleTasks.companyId, co));
+    expect(healed.every((x) => x.confirmed)).toBe(true);
+    expect(
+      healed
+        .find((x) => x.id === launch?.id)
+        ?.startDate?.toISOString()
+        .slice(0, 10),
+    ).toBe('2026-11-26');
+  });
 });
