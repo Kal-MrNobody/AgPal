@@ -21,3 +21,19 @@ export async function decideApproval(
   revalidatePath('/', 'layout');
   return r;
 }
+
+/** Batch-approve every held spend at or under `maxDollars` (each re-checked by the gate). */
+export async function batchApprove(
+  maxDollars: number,
+): Promise<{ approved: { approvalId: string; status: string; rule: string }[] }> {
+  const maxMinor = String(Math.round(Math.min(Math.max(maxDollars, 0), 500) * 100));
+  const r = await api<{ approved: { approvalId: string; status: string; rule: string }[] }>(
+    '/api/approvals/batch',
+    {
+      method: 'POST',
+      body: { maxMinor, note: `batch-approved (up to $${maxDollars})` },
+    },
+  );
+  revalidatePath('/', 'layout');
+  return r;
+}

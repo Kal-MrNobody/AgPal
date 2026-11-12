@@ -544,6 +544,34 @@ export class Gate {
     }
   }
 
+  /**
+   * Crash recovery (Prompt 23): intents that were approved and reserved but never executed (the process died between
+   * the ledger hold and the provider call) are executed now, with the same idempotency key, so the provider
+   * de-duplicates if the call had in fact gone out. Returns the ids it recovered.
+   */
+  async recoverStuck(olderThanMs = 5 * 60_000): Promise<string[]> {
+    const cutoff = new Date(this.now().getTime() - olderThanMs);
+    const stuck = await this.db
+      .select()
+      .from(spendIntents)
+      .where(and(eq(spendIntents.status, 'approved'), sql`${spendIntents.updatedAt} < ${cutoff}`));
+    const done: string[] = [];
+    for (const row of stuck) {
+      await this.execute(row.id, rowToIntent(row), row.holdId);
+      await this.audit(
+        this.db,
+        row.companyId,
+        'system',
+        'execute.recovered',
+        'spend_intent',
+        row.id,
+        {},
+      );
+      done.push(row.id);
+    }
+    return done;
+  }
+
   /** Retry a failed execution with the same idempotency key. */
   async retry(intentId: string): Promise<Partial<GateResult>> {
     const [row] = await this.db.select().from(spendIntents).where(eq(spendIntents.id, intentId));

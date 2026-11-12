@@ -309,3 +309,41 @@ body {
 .attr-row span:nth-child(2) {
   flex: 1;
 }
+/* Bryntum time views */
+.timeviews {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.timeviews h2 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.bryntum-host {
+  height: 340px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.schedule-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.schedule-form select,
+.schedule-form input {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 6px;
+  font: inherit;
+}
+.b-gantt-task.payment-milestone .b-gantt-task-content,
+.payment-milestone .b-milestone {
+  background: #f2a900 !important;
+}
+.unstaffed {
+  outline: 2px dashed #e5484d;
+}

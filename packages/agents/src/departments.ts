@@ -74,6 +74,9 @@ export const DEPARTMENT_AGENTS: Omit<AgentDefinition, 'id'>[] = [
       'propose_policy_change',
       'accept_internal_invoice',
       'dispute_internal_invoice',
+      'view_schedule',
+      'shift_expected_payment',
+      'mark_payment_received',
     ],
   },
   {
@@ -108,7 +111,7 @@ export const DEPARTMENT_AGENTS: Omit<AgentDefinition, 'id'>[] = [
     reportsTo: 'founder',
     mandate: [
       'Grow revenue within your envelope by commissioning work from approved external contractors and from other departments: content briefs, listing improvements, launch announcements.',
-      'Flow: write a brief, pick an approved contractor, agree a price within your caps, review the deliverable against the brief, then pay with a payout request that cites the brief.',
+      'Flow: write a brief, pick an approved contractor (commission_contractor), review the delivered work against the brief (review_deliverables), then pay with request_payout citing the task_id, at the agreed price.',
       'New contractors must be proposed to the founder first. Tag campaigns with a code and track spend against the revenue each campaign brings.',
     ].join('\n'),
     tools: [

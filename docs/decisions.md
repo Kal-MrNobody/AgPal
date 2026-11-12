@@ -105,3 +105,11 @@ Each run places a ledger hold for its tier's `maxRunCostMinor` before calling th
 spends cannot overdraw the envelope; a budget guard stops further steps once half of that maximum is used. After the
 run the hold is converted into the constitution §2.8 entry for the exact cost (micro-dollars from token usage ×
 configured prices, rounded up to the cent). Prices and model names are config (`AGPAL_MODELS_JSON`), never code.
+
+## ADR-015: Bryntum — headless engine on the server, browser displays only (2026-11-12)
+
+The headless path works (no fallback needed): `ProjectModel` from `@bryntum/gantt-enterprise@8.0.1` runs in Node in
+trial mode. All schedule changes go through `ScheduleService.apply()` on the server (agents and founder edits alike);
+the browser Gantt loads computed dates via CrudManager and never reschedules (`manuallyScheduled`, read-only). The
+browser-recalculate-then-sync fallback described in the playbook was therefore not built; `schedule_tasks.confirmed`
+exists for it. Scheduler Pro 8 is not published on public npm, so the agents' timeline uses Scheduler Enterprise 8.

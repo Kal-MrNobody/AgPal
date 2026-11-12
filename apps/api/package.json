@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "webhook:tunnel": "node --env-file-if-exists=../../.env --import tsx scripts/tunnel.ts"
+    "webhook:tunnel": "node --env-file-if-exists=../../.env --import tsx scripts/tunnel.ts",
+    "webhook:register": "node --env-file-if-exists=../../.env --import tsx scripts/register-webhook.ts"
   },
   "dependencies": {
     "@agpal/shared": "workspace:*",
@@ -18,6 +19,7 @@
     "fastify": "5.12.8",
     "@agpal/ledger": "workspace:*",
     "pg-boss": "12.38.2",
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "@agpal/schedule": "workspace:*"
   }
 }

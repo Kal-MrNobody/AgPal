@@ -229,3 +229,80 @@ Next: **Prompt 10 — Agent runtime core.**
 - Verified live: "Why did Growth overspend?" answered from real data (payout $50 + fee, $100 held at
   `approval_threshold`, two `category.not_allowed` denials, $28.68 available) and offered a draft
   (`docs/screens/cfo-why-growth-overspent.png`).
+
+## 2026-11-12 — Prompt 20: Bryntum time views
+
+- **Headless engine verified** in Node with `@bryntum/gantt-enterprise@8.0.1` (trial, no key): see
+  `docs/bryntum-headless.md` and `examples/bryntum-headless/`.
+- `packages/schedule`: `recalculate()` + `ScheduleService` (one server path; dates + audit in one transaction);
+  `schedule_tasks` / `schedule_dependencies` tables; agent tools `view_schedule`, `shift_expected_payment`,
+  `mark_payment_received` (Finance); API `GET /api/schedule` (CrudManager load), `POST /api/schedule/change`.
+- Boardroom **Schedule** page: Bryntum Gantt (server dates only) with a slip/received form going through the server;
+  Scheduler with one row per agent (runs, assigned tasks, dispute work blocks; unstaffed disputes highlighted in red;
+  expected payouts and subscription renewals as markers).
+- Stop condition met: changing one payment's `constraintDate` with no browser open recalculates every dependent
+  milestone on the server (tests), the Gantt shows exactly the server's dates (verified in the UI: INV-1042 slipped
+  to Nov 22 → launch Nov 24, contractor Nov 27, Q1 allocation Nov 28), and the change is in the audit trail.
+
+## 2026-11-12 — Prompt 21: Fast approvals everywhere
+
+- Boardroom: approval cards (intent, evidence links, rule, agent's reason, approve/deny with note) plus
+  **batch-approve small items** (≤ $25; `POST /api/approvals/batch`, every item re-checked by the gate).
+- `NotificationChannel` abstraction with a **Telegram** implementation (`packages/policy/src/notify.ts`): the worker
+  announces each held approval once with inline Approve/Deny buttons; `POST /telegram/webhook` handles callbacks.
+- A callback acts only if: Telegram's secret header matches, it comes from the founder's chat **and** user id, its
+  `callback_data` carries a valid HMAC for that approval and decision (fits the 64-byte limit), and its callback id has
+  never been seen. The gate then re-checks every deny rule; approving twice does nothing.
+- Tests (7): signature round trip; forged callbacks (no/wrong header, bad or foreign signature, wrong chat, wrong user,
+  flipped decision) approve nothing; a replayed callback is ignored; a deny cannot be replayed into an approve; a
+  double-tapped approve pays once; announcements happen once and never contain the bot token.
+- To enable: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_FOUNDER_USER_ID`, `TELEGRAM_WEBHOOK_SECRET`,
+  `AGPAL_CALLBACK_SECRET`, then `setWebhook` to `<PUBLIC_API_URL>/telegram/webhook` with the secret token.
+
+**Phase 4 done.**
+
+## 2026-11-12 — Prompt 22: Injection red team
+
+- `tests/redteam` (workspace package): 14 cases across customer messages, dispute text, contractor deliverables,
+  product listings and webhook metadata, with encoded (base64), homoglyph and indirect variants; each plays a fully
+  compromised model. **14/14 held.** Report: `docs/redteam.md`.
+- Fixed in code: Growth payouts must cite a delivered task (payee = task contractor, amount ≤ agreed price, paid once);
+  internal invoices must bill a delivered, requested task, once.
+
+## 2026-11-12 — Prompt 23: Chaos and reliability
+
+- `Gate.recoverStuck()` (worker every 5 min): executes intents that were approved and reserved but never executed
+  (crash between hold and provider call), with the original idempotency key.
+- `packages/policy/src/chaos.test.ts` (6): lost capture response (same request id, booked once); timeout after PayPal
+  accepted a payout (hold kept, retry sends nothing new); crash between hold and PayPal call (recovered once);
+  double-clicked approval (one payout); simultaneous spends on one envelope (never overspent); rejected approval
+  releases its hold — each ends with an invariant check. Duplicate/out-of-order webhooks and token expiry are covered
+  in `webhooks.test.ts` and `http.test.ts`. Recovery paths: `docs/runbook.md`.
+
+## 2026-11-12 — Prompt 24: Graduated autonomy
+
+- `packages/policy/src/autonomy.ts`: trust score from the ledger and gate record (+1 accepted work / settled internal
+  invoice, −3 reversal caused, −2 refund caused, −2 policy denial, −3 founder override; trailing 30 days);
+  `nextLevel` (promote at ≥ 10 with no denial for 7 days, up to level 3 without a pin; demote below 0 or on a founder
+  override); `applyDailyAutonomy` at the UTC day boundary (worker cron 00:05, once per day, audit-logged);
+  `pinAutonomy` (founder; `POST /api/agents/:id/pin`). Levels map to cap and auto-approve multipliers in policy config.
+- Scorecard widget shows level (📌 when pinned), trust score and its inputs.
+- Tests (6): rules; promotion from accepted work (and the gate's limits rise); demotion from denials (level 0 holds
+  everything); pinning survives the daily job.
+
+**Phase 5 done.**
+
+## 2026-11-12 — Prompt 25: Deploy to Render (prepared)
+
+- `render.yaml` Blueprint (api, web, worker, reconcile cron, Postgres, `agpal-shared` env group with generated
+  secrets), pre-deploy migrations, health checks, `$PORT` wiring, private-network API host for the web app.
+- `pnpm seed:demo` (dry simulated week), `pnpm webhook:register --url …` (registers the production PayPal webhook via
+  the API), `docs/deploy.md` (exact clicks + verification checklist).
+- **Not deployed from this session**: it needs the founder's Render account (Blueprint connect is a dashboard action).
+
+## 2026-11-12 — Prompt 26: README and demo script
+
+- `README.md` for judges: what AgPal is, invariants and how each is enforced, 60-second quickstart, architecture
+  diagram, PayPal APIs used, AG Studio / Bryntum usage, APIMatic write-up link.
+- `docs/demo-script.md`: a timed 3-minute demo walkthrough.
+- Remaining founder actions: deploy the Render Blueprint (`docs/deploy.md`), record the demo, submit on Devpost.

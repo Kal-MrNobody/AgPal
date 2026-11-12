@@ -2,9 +2,15 @@ import { eq } from 'drizzle-orm';
 import { PgBoss } from 'pg-boss';
 import { agentsToWake, createAgentRuntime } from '@agpal/agents';
 import { agents, createDb } from '@agpal/db';
-import { createServices } from '@agpal/policy';
+import {
+  announcePendingApprovals,
+  applyDailyAutonomy,
+  createServices,
+  TelegramChannel,
+} from '@agpal/policy';
 import { loadEnv } from '@agpal/shared';
 import { QUEUES, WEBHOOK_RETRY_LIMIT } from './queues.js';
+import { scheduleTools } from './schedule-tools.js';
 import { handleWebhookJob } from './webhook-job.js';
 
 const env = loadEnv();
@@ -14,11 +20,10 @@ const services = createServices(
   env,
   env.AGPAL_COMPANY_ID ? { defaultCompanyId: env.AGPAL_COMPANY_ID } : {},
 );
-const { runtime } = createAgentRuntime(
-  db,
-  services,
-  env.OPENAI_API_KEY ? { openaiApiKey: env.OPENAI_API_KEY.reveal() } : {},
-);
+const { runtime } = createAgentRuntime(db, services, {
+  extraTools: scheduleTools,
+  ...(env.OPENAI_API_KEY ? { openaiApiKey: env.OPENAI_API_KEY.reveal() } : {}),
+});
 const boss = new PgBoss(env.DATABASE_URL.reveal());
 boss.on('error', (err: unknown) => {
   console.error('pg-boss error', err instanceof Error ? err.message : 'unknown');
@@ -72,6 +77,46 @@ setInterval(() => {
     }
   });
 }, 15_000);
+
+// Telegram approval cards: announce each new held approval once.
+if (
+  env.AGPAL_COMPANY_ID &&
+  env.TELEGRAM_BOT_TOKEN &&
+  env.TELEGRAM_CHAT_ID &&
+  env.AGPAL_CALLBACK_SECRET
+) {
+  const channel = new TelegramChannel({
+    botToken: env.TELEGRAM_BOT_TOKEN,
+    chatId: env.TELEGRAM_CHAT_ID,
+    callbackSecret: env.AGPAL_CALLBACK_SECRET,
+  });
+  const companyId = env.AGPAL_COMPANY_ID;
+  setInterval(() => {
+    void announcePendingApprovals(db, companyId, channel).catch((e: unknown) => {
+      console.error('telegram announce failed', e instanceof Error ? e.message : 'unknown');
+    });
+  }, 30_000);
+}
+
+// Crash recovery: execute approved-but-never-executed intents (idempotent).
+setInterval(() => {
+  void services.gate.recoverStuck().catch((e: unknown) => {
+    console.error('recovery failed', e instanceof Error ? e.message : 'unknown');
+  });
+}, 5 * 60_000);
+
+// Graduated autonomy: levels change only at the UTC day boundary (00:05), logged.
+await boss.createQueue('autonomy.daily');
+await boss.schedule('autonomy.daily', '5 0 * * *', {});
+await boss.work('autonomy.daily', async () => {
+  if (!env.AGPAL_COMPANY_ID) return;
+  const staff = await db.select().from(agents).where(eq(agents.companyId, env.AGPAL_COMPANY_ID));
+  await applyDailyAutonomy(
+    db,
+    env.AGPAL_COMPANY_ID,
+    staff.map((a) => ({ id: a.id, department: a.department })),
+  );
+});
 
 // Nightly reconciliation (03:17 UTC) for the deployment's company.
 await boss.schedule(QUEUES.reconciliation, '17 3 * * *', {});

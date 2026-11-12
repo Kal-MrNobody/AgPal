@@ -122,10 +122,28 @@ export class Coordination {
     runId?: string;
   }): Promise<string> {
     if (i.seller === i.buyer) throw new Error('A department cannot invoice itself');
-    if (i.taskId) {
+    // Red-team fix: every internal invoice must bill a task the buyer actually requested from the seller.
+    if (!i.taskId) throw new Error('An internal invoice must reference the task it bills');
+    {
       const [t] = await this.db.select().from(tasks).where(eq(tasks.id, i.taskId));
-      if (!t || t.toDepartment !== i.seller || t.fromDepartment !== i.buyer)
+      if (
+        !t ||
+        t.toDepartment !== i.seller ||
+        t.fromDepartment !== i.buyer ||
+        t.companyId !== i.companyId
+      )
         throw new Error('Invoice does not match the task');
+      if (t.status !== 'delivered') throw new Error('Only delivered work can be invoiced');
+      const [already] = await this.db
+        .select()
+        .from(internalInvoices)
+        .where(
+          and(
+            eq(internalInvoices.taskId, i.taskId),
+            inArray(internalInvoices.status, ['issued', 'settled', 'held']),
+          ),
+        );
+      if (already) throw new Error('This task is already invoiced');
       if (i.amountMinor > t.budgetMinor)
         throw new Error(`Invoice exceeds the ${t.budgetMinor} budget offered on the task`);
     }

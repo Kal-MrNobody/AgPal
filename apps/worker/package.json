@@ -16,7 +16,8 @@
     "loop:manual": "node --env-file-if-exists=../../.env --import tsx scripts/loop-manual.ts",
     "agent:run": "node --env-file-if-exists=../../.env --import tsx scripts/agent-run.ts",
     "sim:week": "node --env-file-if-exists=../../.env --import tsx scripts/sim-week.ts",
-    "founder:link": "node --env-file-if-exists=../../.env --import tsx scripts/founder-link.ts"
+    "founder:link": "node --env-file-if-exists=../../.env --import tsx scripts/founder-link.ts",
+    "schedule:seed": "node --env-file-if-exists=../../.env --import tsx scripts/schedule-seed.ts"
   },
   "dependencies": {
     "@agpal/shared": "workspace:*",
@@ -25,6 +26,8 @@
     "@agpal/agents": "workspace:*",
     "pg-boss": "12.38.2",
     "@agpal/ledger": "workspace:*",
-    "drizzle-orm": "0.45.4"
+    "drizzle-orm": "0.45.4",
+    "@agpal/schedule": "workspace:*",
+    "zod": "4.6.7"
   }
 }

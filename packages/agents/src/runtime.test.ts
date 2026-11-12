@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { agentRuns, domainEvents, journalEntries, spendIntents } from '@agpal/db';
+import { agentRuns, domainEvents, journalEntries, spendIntents, tasks } from '@agpal/db';
 import { createTestDatabase, type TestDatabase } from '@agpal/db/testing';
 import { ACC, Ledger } from '@agpal/ledger';
 import { FakePayments, Gate } from '@agpal/policy';
@@ -12,6 +12,29 @@ import { coreToolsByName } from './tools.js';
 import type { AgentDefinition } from './types.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
+
+/** A delivered contractor task (Growth pays only for commissioned, delivered work). */
+async function deliveredTask(
+  db: TestDatabase['db'],
+  companyId: string,
+  contractor: string,
+  budget: bigint,
+): Promise<string> {
+  const id = newId('task');
+  await db.insert(tasks).values({
+    id,
+    companyId,
+    fromDepartment: 'growth',
+    toDepartment: 'contractor',
+    contractorEmail: contractor,
+    title: 'Work',
+    brief: 'A brief',
+    budgetMinor: budget,
+    status: 'delivered',
+  });
+  return id;
+}
+
 const DEPTS = ['revenue', 'finance', 'support', 'growth'].map((code) => ({ code, name: code }));
 
 const growthAgent: AgentDefinition = {
@@ -67,6 +90,7 @@ describe.runIf(hasDb)('AgentRuntime (scripted model)', () => {
   });
 
   it('wakes on a heartbeat, reads its inbox, creates a SpendIntent and books its AI cost', async () => {
+    const taskId = await deliveredTask(t.db, co, 'alice@example.com', 2500n);
     const rt = runtime(
       new ScriptedProvider([
         (req) => {
@@ -80,6 +104,7 @@ describe.runIf(hasDb)('AgentRuntime (scripted model)', () => {
                 arguments: JSON.stringify({
                   payee_email: 'alice@example.com',
                   amount_cents: 2500,
+                  task_id: taskId,
                   category: 'content',
                   reason: 'Blog post per brief #7 delivered',
                 }),

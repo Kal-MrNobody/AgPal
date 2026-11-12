@@ -3,7 +3,12 @@ import { cookies } from 'next/headers';
 import { signToken, verifyToken } from '@agpal/shared';
 
 /** Server-side only: the API URL and admin token never reach the browser. */
-const API_URL = process.env.AGPAL_API_URL ?? 'http://localhost:4000';
+// Render private network: AGPAL_API_HOSTPORT (host:port of agpal-api); locally AGPAL_API_URL or localhost.
+const API_URL =
+  process.env.AGPAL_API_URL ??
+  (process.env.AGPAL_API_HOSTPORT
+    ? `http://${process.env.AGPAL_API_HOSTPORT}`
+    : 'http://localhost:4000');
 const SESSION_COOKIE = 'agpal_session';
 const SESSION_SECONDS = 12 * 3600;
 

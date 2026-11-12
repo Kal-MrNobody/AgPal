@@ -205,6 +205,9 @@ importers:
       '@agpal/policy':
         specifier: workspace:*
         version: link:../../packages/policy
+      '@agpal/schedule':
+        specifier: workspace:*
+        version: link:../../packages/schedule
       '@agpal/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -223,6 +226,27 @@ importers:
       '@agpal/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      '@bryntum/core-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@bryntum/engine-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@bryntum/gantt-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@bryntum/gantt-react-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@bryntum/grid-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@bryntum/scheduler-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@bryntum/scheduler-react-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
       ag-grid-community:
         specifier: 36.3.0
         version: 36.3.0
@@ -272,6 +296,9 @@ importers:
       '@agpal/policy':
         specifier: workspace:*
         version: link:../../packages/policy
+      '@agpal/schedule':
+        specifier: workspace:*
+        version: link:../../packages/schedule
       '@agpal/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -281,6 +308,9 @@ importers:
       pg-boss:
         specifier: 12.38.2
         version: 12.38.2(@opentelemetry/api@1.10.0)
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
 
   packages/agents:
     dependencies:
@@ -378,6 +408,27 @@ importers:
         specifier: 4.10.2
         version: 4.10.2
 
+  packages/schedule:
+    dependencies:
+      '@agpal/db':
+        specifier: workspace:*
+        version: link:../db
+      '@agpal/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@bryntum/core-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@bryntum/engine-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      '@bryntum/gantt-enterprise':
+        specifier: 8.0.1
+        version: 8.0.1
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
+
   packages/shared:
     dependencies:
       zod:
@@ -387,6 +438,27 @@ importers:
       fast-check:
         specifier: 4.10.2
         version: 4.10.2
+
+  tests/redteam:
+    dependencies:
+      '@agpal/agents':
+        specifier: workspace:*
+        version: link:../../packages/agents
+      '@agpal/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@agpal/ledger':
+        specifier: workspace:*
+        version: link:../../packages/ledger
+      '@agpal/policy':
+        specifier: workspace:*
+        version: link:../../packages/policy
+      '@agpal/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
 
 packages:
 
@@ -436,6 +508,42 @@ packages:
   '@apimatic/schema@0.7.21':
     resolution: {integrity: sha512-RCke4toXjA7fBRxQVa1GR+Lj9utVOEJ3voDI26dhk+bZuAac4UXPzkTEaIO3AIe/o8pcKCOkpNIzhzm57Cv2Qg==}
     engines: {node: '>=14.15.0 || >=16.0.0'}
+
+  '@bryntum/core-enterprise@8.0.1':
+    resolution: {integrity: sha512-OyoMMMmNokZKKCIl5tb16bvzcR+DTj6OEdrrUzsNA6ybXpe9fJgGqm3pYRcy327iI6REbtiAQiVYgDwgEr0vfg==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/core-react-enterprise@8.0.1':
+    resolution: {integrity: sha512-Vo2wEPS0mDJd8a3YQAaSAB9+ezgvJeDa+UEOS+lDFPTu619aiNN3gzrFiOMQo9uaozFT6USMumpJieK7OI9sQQ==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/engine-enterprise@8.0.1':
+    resolution: {integrity: sha512-yd2SHU75KyYeUylVNBCyiRnEVG5MDKYa6phtYn53ajVlLCDE51HPYkvlTBDaRwSpWpODnXxDtfZFLyxHMg0UIQ==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/gantt-enterprise@8.0.1':
+    resolution: {integrity: sha512-fX8eiwpyTwfZL4jYjIa2V9KgRqJKS4eDnzoqF76C7u5f83MD1hD2iD3fLPDgCrNpvxA0IwyKCYtIJSaThLuGsw==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/gantt-react-enterprise@8.0.1':
+    resolution: {integrity: sha512-5+PM+t54B11xUWnUWsmxo3iAswTG+tFoGEMwoHFVWreUeNmestc/GEesEWJedk5cyn/b1a5/G6WCzUq7OGwCWg==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/grid-enterprise@8.0.1':
+    resolution: {integrity: sha512-9b/2/91oy94ViY6+BrMBC70D/AyxOlIF4w5ujFD8nNAQJR7PbTNgjPml5XyL49zYcEH80XLPKnFJJRzwym5/6w==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/grid-react-enterprise@8.0.1':
+    resolution: {integrity: sha512-dyNoMdAprzHM91jO+55x+pNaS6KeTk+vIjijH6kc3sG2Ook/wVTo4GszYMlv8xZSmJNw38NfCWnCW0yATGRlRQ==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/scheduler-enterprise@8.0.1':
+    resolution: {integrity: sha512-pt6xjsurnbDyxhnWZLrmCqGrj67G4bOps/craB6DrtligiwqfoOgg1ogBVBa099NYuDWF+fmwL+imnm5dCeq3w==}
+    engines: {node: '>=0.10.0'}
+
+  '@bryntum/scheduler-react-enterprise@8.0.1':
+    resolution: {integrity: sha512-k6Hqwig87VMItPOA5nPNdBvyQCEsKuNb9ycqix//kk5luxSm9hCqsvg4o1sRBCTqfE2lzx5e96x6EqQ4Ea/5ow==}
+    engines: {node: '>=0.10.0'}
 
   '@cacheable/memory@2.2.0':
     resolution: {integrity: sha512-CTLKqLItRCEixEAewD3/j9DB3/o96gpTPD4eJ1v+DGOlxZRZncRQkGYqqnAGCscYd6RNeXfGeiuCphsPtqyIfQ==}
@@ -2755,6 +2863,49 @@ snapshots:
   '@apimatic/schema@0.7.21':
     dependencies:
       tslib: 2.9.1
+
+  '@bryntum/core-enterprise@8.0.1': {}
+
+  '@bryntum/core-react-enterprise@8.0.1':
+    dependencies:
+      '@bryntum/core-enterprise': 8.0.1
+
+  '@bryntum/engine-enterprise@8.0.1': {}
+
+  '@bryntum/gantt-enterprise@8.0.1':
+    dependencies:
+      '@bryntum/core-enterprise': 8.0.1
+      '@bryntum/engine-enterprise': 8.0.1
+      '@bryntum/grid-enterprise': 8.0.1
+      '@bryntum/scheduler-enterprise': 8.0.1
+
+  '@bryntum/gantt-react-enterprise@8.0.1':
+    dependencies:
+      '@bryntum/core-react-enterprise': 8.0.1
+      '@bryntum/gantt-enterprise': 8.0.1
+      '@bryntum/grid-react-enterprise': 8.0.1
+      '@bryntum/scheduler-react-enterprise': 8.0.1
+
+  '@bryntum/grid-enterprise@8.0.1':
+    dependencies:
+      '@bryntum/core-enterprise': 8.0.1
+
+  '@bryntum/grid-react-enterprise@8.0.1':
+    dependencies:
+      '@bryntum/core-react-enterprise': 8.0.1
+      '@bryntum/grid-enterprise': 8.0.1
+
+  '@bryntum/scheduler-enterprise@8.0.1':
+    dependencies:
+      '@bryntum/core-enterprise': 8.0.1
+      '@bryntum/engine-enterprise': 8.0.1
+      '@bryntum/grid-enterprise': 8.0.1
+
+  '@bryntum/scheduler-react-enterprise@8.0.1':
+    dependencies:
+      '@bryntum/core-react-enterprise': 8.0.1
+      '@bryntum/grid-react-enterprise': 8.0.1
+      '@bryntum/scheduler-enterprise': 8.0.1
 
   '@cacheable/memory@2.2.0':
     dependencies:
