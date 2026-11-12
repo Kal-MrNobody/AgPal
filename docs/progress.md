@@ -360,3 +360,8 @@ Company `co_9ac65ecb3eca4020b8dea2fb054e3a07`, window 11:54:06–11:58:00 UTC, a
   payout that is held for the founder (`approval_threshold`); attributed to `demo-setup`.
 - `docs/demo-script.md` rewritten for what is live: Money flow, held payout, "Delegated to CFO", worker schedule
   recalculation, suspense and resolve.
+
+## 2026-11-12 — Recording guide support
+
+- `pnpm agent:run` accepts a department name (`finance`, `growth`, …) as well as an agent id, resolved within
+  `--company` / `AGPAL_COMPANY_ID`, so the founder can trigger an agent on camera. Demo script prep lists it.

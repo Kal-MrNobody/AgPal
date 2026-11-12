@@ -9,7 +9,10 @@
    gate (Finance allocation, within policy) and submits a $90 contractor payout that the gate **holds** (over
    Growth's $50 auto-approve). Both are attributed to `demo-setup` in the audit trail.
 3. Second tab: PayPal sandbox dashboard (developer.paypal.com → Sandbox accounts → the business account → Activity).
-4. Window at 1500 px wide or more. The AG Studio watermark and the Bryntum "Trial" badge are expected (no licence keys).
+4. Optional live agent: keep the Render worker Shell open to run `pnpm agent:run finance --note "Founder asks: weekly
+budget check"` on camera (also `growth`, `revenue`, `support`). It runs the real model and prints each tool call,
+   the summary and the AI cost booked to the department.
+5. Window at 1500 px wide or more. The AG Studio watermark and the Bryntum "Trial" badge are expected (no licence keys).
 
 ## 0:00–0:25 — The pitch (Overview)
 
