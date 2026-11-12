@@ -8,7 +8,9 @@ import {
   type AgStudioApi,
   type AgStudioMode,
 } from 'ag-studio';
-import { AgStudio } from 'ag-studio-react';
+import { AgStudioAiModule } from 'ag-studio';
+import { AgStudio, AgStudioProvider } from 'ag-studio-react';
+import { buildCfo, type Attribution } from './ai/cfo';
 import { decideApproval, refreshData } from '../app/actions';
 import { boardroomWidgets } from '../widgets';
 import type { BoardroomContext, BoardroomRegistry } from '../widgets/registry';
@@ -49,6 +51,29 @@ export function Boardroom({ data, page }: { data: BoardroomData; page: PageId })
     [],
   );
   if (!boardroomStore.get()) boardroomStore.set(data);
+
+  // Boardroom CFO: who built or changed what, per question, with undo (state snapshot at question start).
+  const [questions, setQuestions] = useState<(Attribution & { snapshot: unknown })[]>([]);
+  const ai = useMemo(
+    () =>
+      buildCfo({
+        onQuestion: (question, runId) => {
+          const snapshot = apiRef.current?.getState();
+          setQuestions((q) => [{ question, runId, changes: [], snapshot }, ...q].slice(0, 10));
+        },
+        onChange: (runId, agentId, tool) => {
+          setQuestions((q) =>
+            q.map((x) =>
+              x.runId === runId
+                ? { ...x, changes: [...x.changes, { agentId, tool, at: Date.now() }] }
+                : x,
+            ),
+          );
+        },
+      }),
+    [],
+  );
+  const modules = useMemo(() => [AgStudioAiModule], []);
 
   useEffect(() => {
     const api = apiRef.current;
@@ -96,21 +121,61 @@ export function Boardroom({ data, page }: { data: BoardroomData; page: PageId })
           {mode === 'view' ? 'Edit dashboard' : 'Done editing'}
         </button>
       </div>
+      {questions.some((q) => q.changes.length > 0) && (
+        <div className="attribution">
+          {questions
+            .filter((q) => q.changes.length > 0)
+            .map((q) => (
+              <div key={q.runId} className="attr-row">
+                <span className="muted">“{q.question.slice(0, 80)}”</span>
+                <span>
+                  {Object.entries(
+                    q.changes.reduce<Record<string, number>>(
+                      (m, c) => ({
+                        ...m,
+                        [`${c.agentId} agent: ${c.tool.replace('_', ' ')}`]:
+                          (m[`${c.agentId} agent: ${c.tool.replace('_', ' ')}`] ?? 0) + 1,
+                      }),
+                      {},
+                    ),
+                  )
+                    .map(([k, n]) => `${k}${n > 1 ? ` ×${n}` : ''}`)
+                    .join(' · ')}
+                </span>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    const api = apiRef.current;
+                    if (api && q.snapshot)
+                      api.setState(q.snapshot as Parameters<AgStudioApi['setState']>[0]);
+                    setQuestions((all) => all.filter((x) => x.runId !== q.runId));
+                  }}
+                >
+                  Undo this question
+                </button>
+              </div>
+            ))}
+        </div>
+      )}
       <div className="studio">
         {/* While Studio loads, render an empty sized container (never null). */}
-        <AgStudio<BoardroomRegistry>
-          style={{ height: '100%', width: '100%' }}
-          theme={boardroomTheme}
-          widgets={widgets}
-          context={context}
-          data={sources}
-          initialState={initialState}
-          mode={mode}
-          onStudioReady={(e: { api: AgStudioApi }) => {
-            apiRef.current = e.api;
-            setReady(true);
-          }}
-        />
+        <AgStudioProvider modules={modules}>
+          <AgStudio<BoardroomRegistry>
+            ai={ai}
+            style={{ height: '100%', width: '100%' }}
+            theme={boardroomTheme}
+            widgets={widgets}
+            context={context}
+            data={sources}
+            initialState={initialState}
+            mode={mode}
+            onStudioReady={(e: { api: AgStudioApi }) => {
+              apiRef.current = e.api;
+              setReady(true);
+            }}
+          />
+        </AgStudioProvider>
       </div>
     </div>
   );

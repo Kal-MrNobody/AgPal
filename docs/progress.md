@@ -212,3 +212,20 @@ Next: **Prompt 10 — Agent runtime core.**
 - Trust record for scorecards (`packages/policy/src/autonomy.ts`, constitution §4) served by the API.
 - Lessons: Studio custom data mappings use `intent: 'category' | 'value'`; `requires: { cardinality: 'one' }`
   forces a single aggregated row.
+
+## 2026-11-12 — Prompt 19: Boardroom CFO inside AG Studio
+
+- `apps/web/components/ai/cfo.ts`: our own lead agent `cfo` (Studio Agent Framework, `directLlmRunner`) that
+  delegates to Studio's built-in Planning, Data, Page and Widget agents, plus read-only custom tools
+  (`api.defineAiTool`) calling apps/api through the founder-session proxy: `explain_envelope_spend`,
+  `compare_departments`, `list_held_approvals`, `explain_reconciliation`, and `draft_spend_intent` (returns a draft;
+  there is no submit path in the browser at all).
+- LLM adapter (AG Studio docs example, via the PayPal × AG Grid boilerplate) → `/api/ai/responses` (Next, founder
+  session) → apps/api `/api/ai/responses` (admin token, model allow-list, output cap) → OpenAI. No key in the browser.
+- Attribution: a telemetry observer maps every delegate run to its top-level question and records widget-changing tool
+  calls per agent; the boardroom shows "page agent: add widget ×3 · widget agent: configure widget ×3" per question
+  with **Undo this question** (restores the report state snapshotted when the question started).
+- Prompt starters: "Why did Growth overspend?", "AI cost vs revenue", "What needs me?", "Explain reconciliation".
+- Verified live: "Why did Growth overspend?" answered from real data (payout $50 + fee, $100 held at
+  `approval_threshold`, two `category.not_allowed` denials, $28.68 available) and offered a draft
+  (`docs/screens/cfo-why-growth-overspent.png`).

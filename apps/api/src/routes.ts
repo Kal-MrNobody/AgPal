@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+import { Readable } from 'node:stream';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import {
@@ -19,6 +20,8 @@ export interface RouteDeps {
   companyId?: string;
   /** Server-to-server token the boardroom's server side sends. Never reaches a browser. */
   adminToken?: string;
+  /** Server-side OpenAI key for the Studio CFO proxy (absent in the cloud dev environment, where the proxy injects it). */
+  openaiApiKey?: string;
 }
 
 /** Cents → dollars for display in charts only. All money logic stays in bigint minor units (invariant 2). */
@@ -91,6 +94,108 @@ export function registerReadRoutes(app: FastifyInstance, deps: RouteDeps): void 
     if (!co) return reply;
     await deps.services.gate.setKillSwitch(co, req.body.on, 'founder');
     return { killSwitch: req.body.on };
+  });
+  // ── Boardroom CFO (AG Studio Agent Framework) ───────────────────────────────────────────────────
+  /** LLM proxy for the in-browser Studio agents: the key stays on the server; models are allow-listed. */
+  app.post('/api/ai/responses', async (req, reply) => {
+    const co = await guard(req, reply);
+    if (!co) return reply;
+    const allowed = (process.env.AGPAL_CFO_MODELS ?? 'gpt-5-mini,gpt-5')
+      .split(',')
+      .map((m) => m.trim());
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    const model =
+      typeof body.model === 'string' && allowed.includes(body.model) ? body.model : allowed[0];
+    const upstream = await fetch('https://api.openai.com/v1/responses', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        // In the cloud dev environment the network proxy injects the key; elsewhere OPENAI_API_KEY is used.
+        authorization: `Bearer ${deps.openaiApiKey ?? 'proxy-injected'}`,
+      },
+      body: JSON.stringify({ ...body, model, max_output_tokens: 16_000 }),
+    });
+    reply
+      .code(upstream.status)
+      .header('content-type', upstream.headers.get('content-type') ?? 'application/json')
+      .header('cache-control', 'no-store');
+    return reply.send(upstream.body ? Readable.fromWeb(upstream.body) : '');
+  });
+
+  /** Read-only CFO tools. Nothing here moves money; a drafted SpendIntent is only returned, never submitted. */
+  app.get<{ Params: { dept: string } }>('/api/cfo/envelope/:dept', async (req, reply) => {
+    const co = await guard(req, reply);
+    if (!co) return reply;
+    const d = await boardroomData(deps, co);
+    const dept = req.params.dept;
+    const env = d.envelopes.find((e) => e.department === dept);
+    const lines = d.ledger.filter((l) => l.account === `cash:envelope:${dept}`);
+    const byFlow: Record<string, number> = {};
+    for (const l of lines) byFlow[l.flow] = (byFlow[l.flow] ?? 0) + l.amount;
+    const payouts = d.intents.filter((i) => i.envelope === dept && i.action === 'payout');
+    return {
+      envelope: env,
+      movementsByFlow: byFlow,
+      payouts: payouts.map((p) => ({
+        amount: p.amount,
+        payee: p.payee,
+        decision: p.decision,
+        rule: p.rule,
+        status: p.status,
+        reason: p.reason,
+      })),
+      denials: d.intents
+        .filter((i) => i.envelope === dept && i.decision === 'deny')
+        .map((i) => ({ rule: i.rule, explanation: i.explanation })),
+    };
+  });
+  app.get('/api/cfo/compare', async (req, reply) => {
+    const co = await guard(req, reply);
+    if (!co) return reply;
+    const d = await boardroomData(deps, co);
+    return {
+      departments: d.departments,
+      envelopes: d.envelopes,
+      agents: d.agents.map((a) => ({
+        agent: a.title,
+        department: a.department,
+        aiCost: a.aiCost,
+        runs: a.runs,
+        trust: a.trustScore,
+        level: a.autonomyLevel,
+      })),
+    };
+  });
+  app.get('/api/cfo/approvals', async (req, reply) => {
+    const co = await guard(req, reply);
+    if (!co) return reply;
+    const d = await boardroomData(deps, co);
+    return { held: d.approvals.filter((a) => a.status === 'pending') };
+  });
+  app.get('/api/cfo/reconciliation', async (req, reply) => {
+    const co = await guard(req, reply);
+    if (!co) return reply;
+    const [run] = await deps.db
+      .select()
+      .from(reconciliationRuns)
+      .where(eq(reconciliationRuns.companyId, co))
+      .orderBy(desc(reconciliationRuns.createdAt))
+      .limit(1);
+    if (!run) return { latest: null };
+    const report = run.report as {
+      items?: { kind: string; detail: string; transactionId?: string }[];
+    };
+    return {
+      latest: { at: run.createdAt.toISOString(), status: run.status },
+      problems: (report.items ?? []).filter(
+        (i) => !['matched', 'verified_live', 'pending', 'info'].includes(i.kind),
+      ),
+      pending: (report.items ?? []).filter(
+        (i) => i.kind === 'pending' || i.kind === 'verified_live',
+      ).length,
+      howLagWorks:
+        'Transaction Search trails real time by ~2-3h; items after its cutoff are pending or verified by id, never mismatches, until 24h old.',
+    };
   });
 }
 

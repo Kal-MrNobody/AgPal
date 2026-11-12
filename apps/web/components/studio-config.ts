@@ -443,5 +443,6 @@ const pages: Record<PageId, AgPageState<BoardroomRegistry>> = {
 
 export const initialReport = (page: PageId): AgReportState<BoardroomRegistry> => ({
   selectedPageId: page,
+  panels: { ai: { collapsed: false }, filters: { collapsed: true } },
   pages: Object.values(pages),
 });

@@ -52,6 +52,7 @@ const app = buildServer({
       services,
       ...(env.AGPAL_COMPANY_ID ? { companyId: env.AGPAL_COMPANY_ID } : {}),
       ...(env.AGPAL_ADMIN_TOKEN ? { adminToken: env.AGPAL_ADMIN_TOKEN.reveal() } : {}),
+      ...(env.OPENAI_API_KEY ? { openaiApiKey: env.OPENAI_API_KEY.reveal() } : {}),
     });
   },
 });
