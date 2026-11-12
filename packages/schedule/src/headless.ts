@@ -157,6 +157,13 @@ export async function recalculate(
   changes: PlanChange[],
 ): Promise<Recalculated> {
   const { ProjectModel } = await loadEngine();
+  // The project must start no later than any date a change moves to, or the engine pins an earlier payment to the
+  // old project start (a payment could slip later but never come back earlier).
+  const changeDates = changes.map((c) => (c.kind === 'shift_payment' ? c.newDate : c.receivedAt));
+  plan = {
+    ...plan,
+    projectStart: [plan.projectStart, ...changeDates].sort()[0] ?? plan.projectStart,
+  };
   const before = build(ProjectModel, plan);
   await before.commitAsync();
   const baseline = new Map(

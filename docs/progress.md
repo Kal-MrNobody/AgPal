@@ -341,3 +341,12 @@ Company `co_9ac65ecb3eca4020b8dea2fb054e3a07`, window 11:54:06–11:58:00 UTC, a
 - Re-run with `--live`: **CLEAN**: capture `1L4080435R4747457` T0005 $29.00 **matched**; both payouts matched to
   their T0001 transactions, which PayPal still shows **pending** (sandbox recipients unclaimed); 5 info rows;
   missing 0, mismatches 0. PayPal data complete to 12:59:59Z.
+
+## 2026-11-12 — Production end-to-end check of founder Gantt edits (Render)
+
+- `POST /api/schedule/change` on agpal-web → API → `schedule.apply` job → worker recalculates (≈5 s round trip):
+  slipping INV-1042 from 11-15 to 11-18 moved the launch, the contractor payout and the Q1 milestone by 3 days, all
+  `confirmed`.
+- Found: moving the payment **back** to 11-15 changed nothing. The plan's project start came from the current
+  earliest date (11-18 after the slip), so the engine pinned the earlier constraint to it. Fixed in `recalculate`
+  (project start ≤ every changed date), with a regression test that fails on the old code.
