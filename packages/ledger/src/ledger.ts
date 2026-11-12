@@ -145,6 +145,28 @@ export class Ledger {
     }
   }
 
+  /** The entry posted with this idempotency key, if any. */
+  async findEntry(companyId: string, idempotencyKey: string): Promise<string | undefined> {
+    return this.findByIdempotencyKey(this.db, companyId, idempotencyKey);
+  }
+
+  /** Company and id of the first entry booking this PayPal id (capture, refund, payout item). */
+  async findByExternalRef(
+    externalRef: string,
+  ): Promise<{ companyId: string; entryId: string; flow: string } | undefined> {
+    const [row] = await this.db
+      .select({
+        companyId: journalEntries.companyId,
+        entryId: journalEntries.id,
+        flow: journalEntries.flow,
+      })
+      .from(journalEntries)
+      .where(eq(journalEntries.externalRef, externalRef))
+      .orderBy(journalEntries.createdAt)
+      .limit(1);
+    return row;
+  }
+
   private async findByIdempotencyKey(
     db: DbOrTx,
     companyId: string,
@@ -394,16 +416,14 @@ export class Ledger {
         );
       }
       const id = newId('hold');
-      await t
-        .insert(holds)
-        .values({
-          id,
-          companyId,
-          envelopeId: env.id,
-          amountMinor,
-          currency: env.currency,
-          reference,
-        });
+      await t.insert(holds).values({
+        id,
+        companyId,
+        envelopeId: env.id,
+        amountMinor,
+        currency: env.currency,
+        reference,
+      });
       return id;
     };
     return tx ? run(tx) : this.db.transaction(run);

@@ -8,13 +8,16 @@
     "start": "node --env-file-if-exists=../../.env --import tsx src/main.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "webhooks:pull": "node --env-file-if-exists=../../.env --import tsx scripts/pull-webhooks.ts"
   },
   "dependencies": {
     "@agpal/shared": "workspace:*",
     "@agpal/db": "workspace:*",
     "@agpal/policy": "workspace:*",
     "@agpal/agents": "workspace:*",
-    "pg-boss": "12.38.2"
+    "pg-boss": "12.38.2",
+    "@agpal/ledger": "workspace:*",
+    "drizzle-orm": "0.45.4"
   }
 }

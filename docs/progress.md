@@ -76,3 +76,19 @@ Next: **Prompt 2 — Money constitution (interview first).**
   contractor payout with founder approval and the real payout fee.
 - `docs/apimatic-plugin.md`: SDK facts, 6 findings while building, 6 audit checks with fixes and regression tests,
   claim-form summary.
+
+## 2026-11-12 — Prompt 7: Webhooks and the event bus
+
+- `POST /webhooks/paypal` (raw-body verification, dedupe by event id, enqueue, fast 200) + worker job with pg-boss
+  retries; `WebhookProcessor` maps captures, refunds/reversals, subscription sales, paid invoices, disputes
+  (withhold/release/lose) and payout items (settle/reverse) to ledger flows; unmatched → suspense + alert.
+- Domain events table (`revenue.received`, `refund.completed`, `dispute.*`, `payout.failed`, `payout.unclaimed`,
+  `subscription.*`, `invoice.paid`), deduplicated.
+- `pnpm webhook:tunnel [--register]` (cloudflared + automatic sandbox webhook registration) for local machines;
+  `pnpm webhooks:pull` as the API-based fallback. Opening a tunnel was blocked in the cloud session (safety policy),
+  so no webhook is registered on the sandbox app yet.
+- Tests: 11 processor tests (duplicates, reversed order, suspense, disputes won/lost, payouts settled/returned),
+  4 route tests.
+
+**Webhook URL to register:** `<PUBLIC_API_URL>/webhooks/paypal` — events listed in
+`packages/policy/src/webhooks.ts` (`PAYPAL_WEBHOOK_EVENTS`).

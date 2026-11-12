@@ -288,3 +288,84 @@ export const agentControls = pgTable('agent_controls', {
   pinnedLevel: integer('pinned_level'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Raw PayPal webhook events, deduplicated by PayPal's event id (Prompt 7). */
+export const webhookEvents = pgTable(
+  'webhook_events',
+  {
+    id: text('id').primaryKey(),
+    eventType: text('event_type').notNull(),
+    resourceType: text('resource_type'),
+    resourceId: text('resource_id'),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull(),
+    verified: boolean('verified').notNull(),
+    /** received | processed | ignored | suspense | failed */
+    status: text('status').notNull().default('received'),
+    attempts: integer('attempts').notNull().default(0),
+    error: text('error'),
+    receivedAt: timestamp('received_at', { withTimezone: true }).notNull().defaultNow(),
+    processedAt: timestamp('processed_at', { withTimezone: true }),
+  },
+  (t) => [index('webhook_events_status').on(t.status, t.receivedAt)],
+);
+
+/** Alerts for the boardroom: suspense items, reconciliation mismatches, failed payouts. */
+export const alerts = pgTable(
+  'alerts',
+  {
+    id: id(),
+    companyId: text('company_id').notNull(),
+    kind: text('kind').notNull(),
+    severity: text('severity').notNull().default('warning'),
+    message: text('message').notNull(),
+    data: jsonb('data').$type<Record<string, unknown>>().notNull().default({}),
+    resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [index('alerts_open').on(t.companyId, t.resolvedAt)],
+);
+
+/**
+ * Internal domain events (revenue.received, payout.failed, dispute.opened, invoice.overdue, …). Agents wake on
+ * them. Deduplicated by `dedupe_key` so replays never double-publish.
+ */
+export const domainEvents = pgTable(
+  'domain_events',
+  {
+    id: id(),
+    companyId: text('company_id').notNull(),
+    name: text('name').notNull(),
+    department: text('department'),
+    payload: jsonb('payload').$type<Record<string, unknown>>().notNull().default({}),
+    dedupeKey: text('dedupe_key').notNull(),
+    /** Simulated events (PayPal webhook simulator) are marked so the ledger and reports can tell. */
+    simulated: boolean('simulated').notNull().default(false),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('domain_events_dedupe').on(t.companyId, t.dedupeKey),
+    index('domain_events_name').on(t.companyId, t.name, t.createdAt),
+  ],
+);
+
+/** Reconciliation runs (Prompt 8). */
+export const reconciliationRuns = pgTable(
+  'reconciliation_runs',
+  {
+    id: id(),
+    companyId: text('company_id').notNull(),
+    windowStart: timestamp('window_start', { withTimezone: true }).notNull(),
+    windowEnd: timestamp('window_end', { withTimezone: true }).notNull(),
+    status: text('status').notNull(),
+    matched: integer('matched').notNull().default(0),
+    missingInLedger: integer('missing_in_ledger').notNull().default(0),
+    missingInPaypal: integer('missing_in_paypal').notNull().default(0),
+    pending: integer('pending').notNull().default(0),
+    amountMismatches: integer('amount_mismatches').notNull().default(0),
+    suspenseItems: integer('suspense_items').notNull().default(0),
+    balanceDiffMinor: money('balance_diff_minor'),
+    report: jsonb('report').$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: createdAt(),
+  },
+  (t) => [index('reconciliation_runs_company').on(t.companyId, t.createdAt)],
+);

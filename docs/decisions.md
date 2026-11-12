@@ -81,3 +81,20 @@ Captures are not spends, so they skip the rules, but they are still PayPal calls
 
 Sandbox orders with a test card `payment_source` capture without buyer approval, so loops, simulations and
 integration tests need no browser. `createAndCaptureSandboxCardOrder` refuses to run against live.
+
+## ADR-012: Apps reach PayPal only through `createServices()` (2026-11-12)
+
+`apps/api` and `apps/worker` never import `@agpal/paypal`. `packages/policy` builds the money stack
+(`createServices`) and hands apps the `Gate`, `Commerce`, `WebhookProcessor` and a read-only `PayPalInbound` view
+(webhook verification, Transaction Search, balances, lookups). Nothing in the inbound view moves money.
+
+## ADR-013: Webhooks — verify raw bytes, dedupe, process idempotently, pull as fallback (2026-11-12)
+
+`POST /webhooks/paypal` verifies with PayPal's verify-webhook-signature API against the exact raw body (fails
+closed without `PAYPAL_WEBHOOK_ID`), stores the event keyed by PayPal's event id and enqueues it. The worker maps
+events to constitution flows with idempotency keys derived from PayPal ids (`paypal:capture:<id>`,
+`paypal:refund:<id>`, `paypal:dispute:<id>:hold|resolved`, `intent:<id>:sent`), so a webhook and an API response
+booking the same money produce one entry. Out-of-order events throw `RetryLaterError` (pg-boss retries 8× with
+backoff); still unmatched on the final attempt → alert + suspense. When inbound delivery is impossible (the cloud
+session's safety policy blocks ingress tunnels), `pnpm webhooks:pull` fetches the same events from
+`/v1/notifications/webhooks-events` over the authenticated API.

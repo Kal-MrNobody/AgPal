@@ -612,6 +612,37 @@ export class Gate {
     });
   }
 
+  /**
+   * A payout failed or came back (constitution §2.5): reverse the cash-out and the accrual, release any hold and
+   * mark the intent failed. Idempotent.
+   */
+  async payoutReversed(
+    intentId: string,
+    p: { itemId: string; status: string; reason: string },
+  ): Promise<void> {
+    const [row] = await this.db.select().from(spendIntents).where(eq(spendIntents.id, intentId));
+    if (!row) throw new Error(`No payout intent ${intentId}`);
+    const reason = `payout ${p.itemId} ${p.status}: ${p.reason}`;
+    for (const suffix of ['sent', 'accrual']) {
+      const entryId = await this.ledger.findEntry(row.companyId, `intent:${intentId}:${suffix}`);
+      if (entryId) await this.ledger.reverse(row.companyId, entryId, reason, 'system');
+    }
+    if (row.holdId) await this.ledger.releaseHold(row.holdId);
+    await this.db
+      .update(spendIntents)
+      .set({ status: 'failed', error: reason, updatedAt: this.now() })
+      .where(eq(spendIntents.id, intentId));
+    await this.audit(
+      this.db,
+      row.companyId,
+      'system',
+      'payout.reversed',
+      'spend_intent',
+      intentId,
+      { itemId: p.itemId, status: p.status },
+    );
+  }
+
   private payeeByEmail(companyId: string, email: string) {
     return this.db
       .select()

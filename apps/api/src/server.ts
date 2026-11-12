@@ -1,9 +1,13 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import { registerPayPalWebhook, type WebhookDeps } from './webhooks.js';
 
 export interface ServerOptions {
   logLevel?: string;
   /** Liveness of dependencies, injected so tests need no database. */
   checkDatabase?: () => Promise<boolean>;
+  webhooks?: WebhookDeps;
+  /** Extra route registrations (read API, gate endpoints). */
+  routes?: (app: FastifyInstance) => void;
 }
 
 /** Log redaction for invariant 6: auth headers and anything named like a secret never reach logs. */
@@ -12,6 +16,7 @@ export const REDACT_PATHS = [
   'req.headers.cookie',
   'req.headers["paypal-auth-algo"]',
   'req.headers["paypal-transmission-sig"]',
+  'req.headers["x-telegram-bot-api-secret-token"]',
   '*.secret',
   '*.password',
   '*.token',
@@ -31,5 +36,7 @@ export function buildServer(opts: ServerOptions = {}): FastifyInstance {
     return { status: database === false ? 'degraded' : 'ok', database };
   });
 
+  if (opts.webhooks) registerPayPalWebhook(app, opts.webhooks);
+  opts.routes?.(app);
   return app;
 }

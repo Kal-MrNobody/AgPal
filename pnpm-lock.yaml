@@ -199,15 +199,24 @@ importers:
       '@agpal/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@agpal/ledger':
+        specifier: workspace:*
+        version: link:../../packages/ledger
       '@agpal/policy':
         specifier: workspace:*
         version: link:../../packages/policy
       '@agpal/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
       fastify:
         specifier: 5.12.8
         version: 5.12.8
+      pg-boss:
+        specifier: 12.38.2
+        version: 12.38.2(@opentelemetry/api@1.10.0)
 
   apps/web:
     dependencies:
@@ -239,12 +248,18 @@ importers:
       '@agpal/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@agpal/ledger':
+        specifier: workspace:*
+        version: link:../../packages/ledger
       '@agpal/policy':
         specifier: workspace:*
         version: link:../../packages/policy
       '@agpal/shared':
         specifier: workspace:*
         version: link:../../packages/shared
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
       pg-boss:
         specifier: 12.38.2
         version: 12.38.2(@opentelemetry/api@1.10.0)

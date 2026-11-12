@@ -21,6 +21,10 @@ export const envSchema = z.object({
   PAYPAL_WEBHOOK_ID: z.string().optional(),
   OPENAI_API_KEY: optionalSecret,
   API_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+  /** The company this deployment runs (single-company mode). Seeded by `pnpm seed`. */
+  AGPAL_COMPANY_ID: z.string().optional(),
+  /** Public URL of apps/api (tunnel or Render), used to register the PayPal webhook. */
+  PUBLIC_API_URL: z.url().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

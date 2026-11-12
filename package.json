@@ -14,7 +14,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:up": "docker compose up -d --wait postgres",
-    "db:down": "docker compose down"
+    "db:down": "docker compose down",
+    "webhook:tunnel": "pnpm --filter @agpal/api webhook:tunnel",
+    "db:migrate": "pnpm --filter @agpal/db db:migrate",
+    "webhooks:pull": "pnpm --filter @agpal/worker webhooks:pull"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

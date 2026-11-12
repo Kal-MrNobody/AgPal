@@ -791,6 +791,41 @@ export class PayPal {
     return str(created.data.id) ?? '';
   }
 
+  /**
+   * Events PayPal sent to this app's webhooks, newest first (`/v1/notifications/webhooks-events`). Fetched over our
+   * authenticated API connection, so they need no signature check. Used to catch up when deliveries cannot reach us.
+   */
+  async listWebhookEvents(
+    since: Date,
+    pageSize = 50,
+  ): Promise<
+    {
+      id: string;
+      event_type: string;
+      resource_type?: string;
+      resource?: Record<string, unknown>;
+      create_time?: string;
+    }[]
+  > {
+    const { data } = await this.http.request<Json>(
+      'GET',
+      '/v1/notifications/webhooks-events',
+      undefined,
+      {
+        query: { page_size: pageSize, start_time: since.toISOString() },
+      },
+    );
+    return asArr(data.events)
+      .map(asObj)
+      .map((e) => ({
+        id: str(e.id) ?? '',
+        event_type: str(e.event_type) ?? '',
+        ...(str(e.resource_type) ? { resource_type: str(e.resource_type) ?? '' } : {}),
+        resource: asObj(e.resource),
+        ...(str(e.create_time) ? { create_time: str(e.create_time) ?? '' } : {}),
+      }));
+  }
+
   /** Ask PayPal to send a sample event to a webhook (sandbox simulator). */
   async simulateWebhookEvent(
     webhookId: string,
