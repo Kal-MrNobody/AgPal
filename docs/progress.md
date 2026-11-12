@@ -65,3 +65,14 @@ Next: **Prompt 2 — Money constitution (interview first).**
   converting the hold), refund.
 - 47 tests: rule table, approval round trips, kill switch, velocity race, idempotent retry, refund caps,
   fuzz proving envelopes never overspend. Rule set summarised in `docs/architecture.md`.
+
+## 2026-11-12 — Prompts 5 and 6: PayPal adapter and APIMatic audit
+
+- `packages/paypal`: SDK 2.5.0 (explicit 15 s timeout, 3 retries with a real budget) + thin REST client;
+  orders (PAY_NOW, NO_SHIPPING), sandbox card capture, captures, refunds, catalog, plans (REST, P5-3),
+  subscriptions, invoicing, payouts, disputes, transaction search, balances, webhook verify/register/simulate.
+- `packages/policy`: `PayPalPayments` (gate port) and `Commerce` (inbound captures).
+- Sandbox integration tests (`AGPAL_SANDBOX_TESTS=1`) pass: real capture with fee/net, refund through the gate,
+  contractor payout with founder approval and the real payout fee.
+- `docs/apimatic-plugin.md`: SDK facts, 6 findings while building, 6 audit checks with fixes and regression tests,
+  claim-form summary.

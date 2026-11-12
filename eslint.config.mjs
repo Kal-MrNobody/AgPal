@@ -76,6 +76,10 @@ export default tseslint.config(
     },
   },
   {
+    files: ['**/*.test.ts', '**/test-helpers.ts', '**/testing.ts'],
+    rules: { '@typescript-eslint/require-await': 'off' },
+  },
+  {
     files: ['**/*.config.{js,mjs,ts}', 'eslint.config.mjs'],
     ...tseslint.configs.disableTypeChecked,
   },

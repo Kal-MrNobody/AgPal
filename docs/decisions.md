@@ -61,3 +61,23 @@ constraint trigger that rejects unbalanced entries even if code is bypassed.
 `journal_entries` has a unique `(company_id, idempotency_key)`. `post` returns the existing entry with
 `duplicate: true` instead of posting twice, including under concurrent retries (unique-violation path).
 Reversals use the key `reversal:<entryId>`, and a unique index allows one reversal per entry.
+
+## ADR-009: PayPal Server SDK where it covers the API, thin REST elsewhere (2026-11-12)
+
+**Decision.** `@paypal/paypal-server-sdk@2.5.0` for Orders, Payments (captures, refunds), Subscriptions (create,
+get) and Transaction Search. A thin typed REST client (`packages/paypal/src/http.ts`) for Catalog products,
+billing plans (P5-3), subscription cancel (P6-1), Invoicing, Payouts, Disputes and webhook verification/
+registration. Both use explicit timeouts and retry budgets, send `PayPal-Request-Id` on every write that moves or
+creates something, and normalize every response into our own types; SDK types never leave `packages/paypal`.
+Fee and net amounts are read from the raw response body.
+
+## ADR-010: Inbound money through packages/policy too (2026-11-12)
+
+Captures are not spends, so they skip the rules, but they are still PayPal calls, so `Commerce` lives in
+`packages/policy` (the only package allowed to import `@agpal/paypal`). Every capture is booked once, keyed by
+`paypal:capture:<id>`, whether it is seen in the API response or the webhook.
+
+## ADR-011: Sandbox card payments for automation (2026-11-12)
+
+Sandbox orders with a test card `payment_source` capture without buyer approval, so loops, simulations and
+integration tests need no browser. `createAndCaptureSandboxCardOrder` refuses to run against live.

@@ -1,14 +1,27 @@
 /**
  * The only package allowed to talk to PayPal (invariant 1, enforced by ESLint).
- * The SDK adapter and thin REST clients arrive in Prompt 5. SDK types never leave this package.
+ * SDK types never leave this package: everything exported is our own.
  */
-export const PAYPAL_BASE_URLS = {
-  sandbox: 'https://api-m.sandbox.paypal.com',
-  live: 'https://api-m.paypal.com',
-} as const;
-
-export type PayPalEnvironment = keyof typeof PAYPAL_BASE_URLS;
-
-export function baseUrlFor(env: PayPalEnvironment): string {
-  return PAYPAL_BASE_URLS[env];
-}
+export * from './types.js';
+export { PayPalError } from './errors.js';
+export { toPayPalAmount, fromPayPalAmount } from './amount.js';
+export { newRequestId, toRequestId } from './http.js';
+export {
+  PayPal,
+  PAYPAL_BASE_URLS,
+  baseUrlFor,
+  SANDBOX_VISA,
+  normalizeCapture,
+  normalizeRefund,
+  normalizePayoutItem,
+  normalizeTransaction,
+  normalizeDispute,
+  normalizeInvoice,
+  captureFromOrder,
+  isTransportError,
+  type PayPalEnvironment,
+  type PayPalOptions,
+  type CreateOrderInput,
+  type SandboxCard,
+} from './paypal.js';
+export { sdkConfiguration } from './sdk.js';
