@@ -1,0 +1,84 @@
+# Render Blueprint for AgPal. New → Blueprint → connect this repo. Fill the `sync: false` values in the dashboard.
+envVarGroups:
+  - name: agpal-shared
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: PAYPAL_ENVIRONMENT
+        value: sandbox
+      - key: PAYPAL_CLIENT_ID
+        sync: false
+      - key: PAYPAL_CLIENT_SECRET
+        sync: false
+      - key: PAYPAL_WEBHOOK_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AGPAL_COMPANY_ID
+        sync: false
+      - key: AGPAL_ADMIN_TOKEN
+        generateValue: true
+      - key: AGPAL_SESSION_SECRET
+        generateValue: true
+      - key: AGPAL_CALLBACK_SECRET
+        generateValue: true
+      - key: COREPACK_ENABLE_DOWNLOAD_PROMPT
+        value: '0'
+
+databases:
+  - name: agpal-db
+    databaseName: agpal
+    user: agpal
+    plan: basic-256mb
+
+services:
+  - type: web
+    name: agpal-api
+    runtime: node
+    plan: starter
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    # Expand-only migrations run before the new version takes traffic (zero downtime).
+    preDeployCommand: pnpm db:migrate
+    startCommand: API_PORT=$PORT pnpm --filter @agpal/api start
+    healthCheckPath: /health
+    envVars:
+      - fromGroup: agpal-shared
+      - key: DATABASE_URL
+        fromDatabase: { name: agpal-db, property: connectionString }
+
+  - type: web
+    name: agpal-web
+    runtime: node
+    plan: starter
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @agpal/web build
+    startCommand: pnpm --filter @agpal/web exec next start -p $PORT
+    healthCheckPath: /login
+    envVars:
+      - fromGroup: agpal-shared
+      - key: AGPAL_API_HOSTPORT
+        fromService: { type: web, name: agpal-api, property: hostport }
+
+  - type: worker
+    name: agpal-worker
+    runtime: node
+    plan: starter
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    startCommand: pnpm --filter @agpal/worker start
+    envVars:
+      - fromGroup: agpal-shared
+      - key: DATABASE_URL
+        fromDatabase: { name: agpal-db, property: connectionString }
+
+  - type: cron
+    name: agpal-reconcile
+    runtime: node
+    plan: starter
+    schedule: '17 3 * * *'
+    buildCommand: corepack enable && pnpm install --frozen-lockfile
+    startCommand: pnpm reconcile --live --hours 48
+    envVars:
+      - fromGroup: agpal-shared
+      - key: DATABASE_URL
+        fromDatabase: { name: agpal-db, property: connectionString }

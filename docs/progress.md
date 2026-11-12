@@ -291,3 +291,11 @@ Next: **Prompt 10 — Agent runtime core.**
   everything); pinning survives the daily job.
 
 **Phase 5 done.**
+
+## 2026-11-12 — Prompt 25: Deploy to Render (prepared)
+
+- `render.yaml` Blueprint (api, web, worker, reconcile cron, Postgres, `agpal-shared` env group with generated
+  secrets), pre-deploy migrations, health checks, `$PORT` wiring, private-network API host for the web app.
+- `pnpm seed:demo` (dry simulated week), `pnpm webhook:register --url …` (registers the production PayPal webhook via
+  the API), `docs/deploy.md` (exact clicks + verification checklist).
+- **Not deployed from this session**: it needs the founder's Render account (Blueprint connect is a dashboard action).

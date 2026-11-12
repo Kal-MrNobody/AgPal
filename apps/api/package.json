@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run",
-    "webhook:tunnel": "node --env-file-if-exists=../../.env --import tsx scripts/tunnel.ts"
+    "webhook:tunnel": "node --env-file-if-exists=../../.env --import tsx scripts/tunnel.ts",
+    "webhook:register": "node --env-file-if-exists=../../.env --import tsx scripts/register-webhook.ts"
   },
   "dependencies": {
     "@agpal/shared": "workspace:*",

@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   if (!(await isFounder()))
     return Response.json({ error: { message: 'Sign in as the founder.' } }, { status: 401 });
   const upstream = await fetch(
-    `${process.env.AGPAL_API_URL ?? 'http://localhost:4000'}/api/ai/responses`,
+    `${process.env.AGPAL_API_URL ?? (process.env.AGPAL_API_HOSTPORT ? `http://${process.env.AGPAL_API_HOSTPORT}` : 'http://localhost:4000')}/api/ai/responses`,
     {
       method: 'POST',
       headers: {
