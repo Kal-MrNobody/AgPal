@@ -177,6 +177,7 @@ export class Commerce {
     kind: RevenueKind = 'sales',
     attribution?: Attribution,
     dept = 'revenue',
+    extraMetadata: Record<string, unknown> = {},
   ): Promise<void> {
     if (c.status !== 'COMPLETED') return; // PENDING captures are booked when PAYMENT.CAPTURE.COMPLETED arrives.
     const revenue = kind === 'sales' ? ACC.sales(dept) : ACC.subscriptions(dept);
@@ -194,7 +195,7 @@ export class Commerce {
       ],
       externalRef: c.captureId,
       idempotencyKey: `paypal:capture:${c.captureId}`,
-      metadata: { orderId: c.orderId, customId: c.customId, kind },
+      metadata: { orderId: c.orderId, customId: c.customId, kind, ...extraMetadata },
     });
   }
 }

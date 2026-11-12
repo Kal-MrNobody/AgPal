@@ -372,6 +372,7 @@ export class Reconciler {
         AND j.external_ref IS NOT NULL
         AND j.occurred_at >= ${start} AND j.occurred_at <= ${end}
         AND NOT EXISTS (SELECT 1 FROM journal_entries r WHERE r.reverses_entry_id = j.id)
+        AND coalesce(j.metadata->>'simulated', 'false') <> 'true'
       GROUP BY j.id`);
     return res.rows.map((r) => ({
       entryId: r.id,

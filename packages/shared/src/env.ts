@@ -23,6 +23,10 @@ export const envSchema = z.object({
   API_PORT: z.coerce.number().int().min(1).max(65535).default(4000),
   /** The company this deployment runs (single-company mode). Seeded by `pnpm seed`. */
   AGPAL_COMPANY_ID: z.string().optional(),
+  /** Shared secret between apps/web (server side) and apps/api for founder endpoints. */
+  AGPAL_ADMIN_TOKEN: optionalSecret,
+  /** Signs founder login links and session cookies in apps/web. */
+  AGPAL_SESSION_SECRET: optionalSecret,
   /** Public URL of apps/api (tunnel or Render), used to register the PayPal webhook. */
   PUBLIC_API_URL: z.url().optional(),
 });

@@ -23,7 +23,8 @@
     "approvals": "pnpm --silent --filter @agpal/worker approvals",
     "reconcile": "pnpm --silent --filter @agpal/worker reconcile",
     "loop:manual": "pnpm --silent --filter @agpal/worker loop:manual",
-    "agent:run": "pnpm --silent --filter @agpal/worker agent:run"
+    "agent:run": "pnpm --silent --filter @agpal/worker agent:run",
+    "sim:week": "pnpm --silent --filter @agpal/worker sim:week"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
