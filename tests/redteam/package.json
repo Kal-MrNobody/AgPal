@@ -1,0 +1,19 @@
+{
+  "name": "@agpal/redteam",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agpal/agents": "workspace:*",
+    "@agpal/db": "workspace:*",
+    "@agpal/ledger": "workspace:*",
+    "@agpal/policy": "workspace:*",
+    "@agpal/shared": "workspace:*",
+    "drizzle-orm": "0.45.4"
+  }
+}

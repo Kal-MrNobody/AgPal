@@ -439,6 +439,27 @@ importers:
         specifier: 4.10.2
         version: 4.10.2
 
+  tests/redteam:
+    dependencies:
+      '@agpal/agents':
+        specifier: workspace:*
+        version: link:../../packages/agents
+      '@agpal/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@agpal/ledger':
+        specifier: workspace:*
+        version: link:../../packages/ledger
+      '@agpal/policy':
+        specifier: workspace:*
+        version: link:../../packages/policy
+      '@agpal/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      drizzle-orm:
+        specifier: 0.45.4
+        version: 0.45.4(@opentelemetry/api@1.10.0)(@types/pg@8.23.1)(pg@8.23.1)
+
 packages:
 
   '@apimatic/authentication-adapters@0.5.14':

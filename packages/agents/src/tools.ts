@@ -110,12 +110,20 @@ export const coreTools: Tool[] = [
         task_id?: string;
       },
     ) => {
+      // Red-team fix: Growth pays contractors only for commissioned, delivered work at the agreed price.
+      if (ctx.agent.department === 'growth' && !a.task_id) {
+        return {
+          error: 'Contractor payouts must cite the commissioned task (task_id) they pay for.',
+        };
+      }
       if (a.task_id) {
         const [t] = await ctx.db
           .select()
           .from(tasks)
           .where(and(eq(tasks.id, a.task_id), eq(tasks.companyId, ctx.agent.companyId)));
         if (!t) return { error: 'Unknown task' };
+        if (t.status !== 'delivered')
+          return { error: `Task is ${t.status}: only delivered, unpaid work can be paid` };
         if (t.contractorEmail && t.contractorEmail.toLowerCase() !== a.payee_email.toLowerCase())
           return { error: 'This task was commissioned from a different contractor' };
         if (BigInt(a.amount_cents) > t.budgetMinor)

@@ -260,3 +260,11 @@ Next: **Prompt 10 — Agent runtime core.**
   `AGPAL_CALLBACK_SECRET`, then `setWebhook` to `<PUBLIC_API_URL>/telegram/webhook` with the secret token.
 
 **Phase 4 done.**
+
+## 2026-11-12 — Prompt 22: Injection red team
+
+- `tests/redteam` (workspace package): 14 cases across customer messages, dispute text, contractor deliverables,
+  product listings and webhook metadata, with encoded (base64), homoglyph and indirect variants; each plays a fully
+  compromised model. **14/14 held.** Report: `docs/redteam.md`.
+- Fixed in code: Growth payouts must cite a delivered task (payee = task contractor, amount ≤ agreed price, paid once);
+  internal invoices must bill a delivered, requested task, once.

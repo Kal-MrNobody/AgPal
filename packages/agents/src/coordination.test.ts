@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq } from 'drizzle-orm';
-import { auditLog, internalInvoices, journalEntries, spendIntents } from '@agpal/db';
+import { auditLog, internalInvoices, journalEntries, spendIntents, tasks } from '@agpal/db';
 import { createTestDatabase, type TestDatabase } from '@agpal/db/testing';
 import { ACC, Ledger } from '@agpal/ledger';
 import { FakePayments, Gate, type Services } from '@agpal/policy';
@@ -11,6 +11,29 @@ import { ScriptedProvider, type ScriptedTurn } from './provider.js';
 import type { AgentDefinition } from './types.js';
 
 const hasDb = Boolean(process.env.DATABASE_URL);
+
+/** A delivered contractor task (Growth pays only for commissioned, delivered work). */
+async function deliveredTask(
+  db: TestDatabase['db'],
+  companyId: string,
+  contractor: string,
+  budget: bigint,
+): Promise<string> {
+  const id = newId('task');
+  await db.insert(tasks).values({
+    id,
+    companyId,
+    fromDepartment: 'growth',
+    toDepartment: 'contractor',
+    contractorEmail: contractor,
+    title: 'Work',
+    brief: 'A brief',
+    budgetMinor: budget,
+    status: 'delivered',
+  });
+  return id;
+}
+
 const DEPTS = ['revenue', 'finance', 'support', 'growth'].map((code) => ({ code, name: code }));
 
 const call = (name: string, args: Record<string, unknown>) => ({
@@ -166,6 +189,26 @@ describe.runIf(hasDb)('Coordination layer', () => {
         companyId: co,
         seller: 'revenue',
         buyer: 'growth',
+        amountMinor: 500n,
+        description: 'not delivered yet',
+        taskId: task,
+      }),
+    ).rejects.toThrow(/delivered/);
+    await expect(
+      coordination.issueInvoice({
+        companyId: co,
+        seller: 'revenue',
+        buyer: 'growth',
+        amountMinor: 500n,
+        description: 'no task at all',
+      }),
+    ).rejects.toThrow(/reference the task/);
+    await coordination.deliver(co, task, 'revenue', 'Done: the work');
+    await expect(
+      coordination.issueInvoice({
+        companyId: co,
+        seller: 'revenue',
+        buyer: 'growth',
         amountMinor: 1001n,
         description: 'too much',
         taskId: task,
@@ -175,9 +218,11 @@ describe.runIf(hasDb)('Coordination layer', () => {
 
   it('approval round trip: a held payout is decided by the founder and the agent learns the outcome next run', async () => {
     await gate.allowPayee(co, 'alice@example.com', 'Alice', 'founder');
+    const tid = await deliveredTask(t.db, co, 'alice@example.com', 9000n);
     const g = build([
       call('request_payout', {
         payee_email: 'alice@example.com',
+        task_id: tid,
         amount_cents: 9000,
         category: 'content',
         reason: 'Launch video',
@@ -237,9 +282,11 @@ describe.runIf(hasDb)('Coordination layer', () => {
 
   it('audit trail links run → tool call → intent → decision → ledger entry', async () => {
     await gate.allowPayee(co, 'alice@example.com', 'Alice', 'founder');
+    const tid = await deliveredTask(t.db, co, 'alice@example.com', 1500n);
     const g = build([
       call('request_payout', {
         payee_email: 'alice@example.com',
+        task_id: tid,
         amount_cents: 1500,
         category: 'content',
         reason: 'Newsletter blurb',
