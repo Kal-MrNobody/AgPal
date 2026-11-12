@@ -7,6 +7,7 @@ import type {
   AgWidgetLayoutState,
 } from 'ag-studio';
 import type { BoardroomData, PageId } from '../lib/types';
+import type { BoardroomRegistry } from '../widgets/registry';
 
 /** Primary keys per table, so live updates can be applied as transactions (AG Studio 3.1 live data). */
 export const TABLE_KEYS = {
@@ -243,7 +244,7 @@ const grid = (text: string, cols: string[]) => ({
   format: title(text),
 });
 
-const pages: Record<PageId, AgPageState> = {
+const pages: Record<PageId, AgPageState<BoardroomRegistry>> = {
   overview: {
     id: 'overview',
     widgets: {
@@ -296,19 +297,23 @@ const pages: Record<PageId, AgPageState> = {
         },
         format: title('Envelope burn: spent, held, available'),
       },
-      envelopes: grid('Envelopes', [
-        'envelopes.department',
-        'envelopes.allocated',
-        'envelopes.spent',
-        'envelopes.held',
-        'envelopes.available',
-      ]),
+      gauge: {
+        type: 'envelopeGauge',
+        dataMapping: {
+          department: [{ id: 'envelopes.department' }],
+          spent: [sum('envelopes.spent')],
+          held: [sum('envelopes.held')],
+          available: [sum('envelopes.available')],
+        },
+        format: title('Envelope gauge'),
+      },
     },
-    widgetLayout: { pnl: at(0, 0, 24, 9), burn: at(0, 9, 14, 13), envelopes: at(14, 9, 10, 13) },
+    widgetLayout: { pnl: at(0, 0, 24, 12), burn: at(0, 12, 12, 16), gauge: at(12, 12, 12, 16) },
   },
   approvals: {
     id: 'approvals',
     widgets: {
+      cards: { type: 'approvalCard', dataMapping: {}, format: title('Waiting for you') },
       byStatus: {
         type: 'donut-chart',
         dataMapping: {
@@ -338,9 +343,10 @@ const pages: Record<PageId, AgPageState> = {
       ]),
     },
     widgetLayout: {
-      byStatus: at(0, 0, 8, 12),
-      decisions: at(8, 0, 16, 12),
-      all: at(0, 12, 24, 12),
+      cards: at(0, 0, 24, 14),
+      byStatus: at(0, 14, 8, 12),
+      decisions: at(8, 14, 16, 12),
+      all: at(0, 26, 24, 12),
     },
   },
   ledger: {
@@ -356,24 +362,24 @@ const pages: Record<PageId, AgPageState> = {
         dataMapping: { value: [{ id: 'ledger.department' }] },
         format: title('Department'),
       },
-      entries: grid('Ledger postings', [
-        'ledger.date',
-        'ledger.flow',
-        'ledger.description',
-        'ledger.account',
-        'ledger.department',
-        'ledger.debit',
-        'ledger.credit',
-        'ledger.agentId',
-        'ledger.paypalRef',
-        'ledger.status',
-      ]),
+      entries: { type: 'ledgerGrid', dataMapping: {}, format: title('Ledger postings') },
+      byFlow: {
+        type: 'column-chart-grouped',
+        dataMapping: { categoryKey: [{ id: 'ledger.flow' }], valueKey: [sum('ledger.debit')] },
+        format: title('Debits by flow'),
+      },
     },
-    widgetLayout: { flows: at(0, 0, 12, 4), dept: at(12, 0, 12, 4), entries: at(0, 4, 24, 20) },
+    widgetLayout: {
+      flows: at(0, 0, 12, 7),
+      dept: at(12, 0, 12, 7),
+      byFlow: at(0, 7, 24, 10),
+      entries: at(0, 17, 24, 26),
+    },
   },
   agents: {
     id: 'agents',
     widgets: {
+      scorecards: { type: 'agentScorecard', dataMapping: {}, format: title('Agent scorecards') },
       staff: grid('AI employees', [
         'agents.title',
         'agents.department',
@@ -402,7 +408,12 @@ const pages: Record<PageId, AgPageState> = {
         'agentRuns.summary',
       ]),
     },
-    widgetLayout: { staff: at(0, 0, 14, 9), cost: at(14, 0, 10, 9), runs: at(0, 9, 24, 15) },
+    widgetLayout: {
+      scorecards: at(0, 0, 24, 14),
+      staff: at(0, 14, 14, 11),
+      cost: at(14, 14, 10, 11),
+      runs: at(0, 25, 24, 16),
+    },
   },
   reconciliation: {
     id: 'reconciliation',
@@ -430,7 +441,7 @@ const pages: Record<PageId, AgPageState> = {
   },
 };
 
-export const initialReport = (page: PageId): AgReportState => ({
+export const initialReport = (page: PageId): AgReportState<BoardroomRegistry> => ({
   selectedPageId: page,
   pages: Object.values(pages),
 });

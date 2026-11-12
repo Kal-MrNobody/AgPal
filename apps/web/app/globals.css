@@ -161,3 +161,132 @@ body {
     overflow-x: auto;
   }
 }
+/* Custom Studio widgets */
+.gauge,
+.wcards,
+.ledger-grid {
+  height: 100%;
+  overflow: auto;
+  padding: 4px 2px;
+  font-size: 13px;
+}
+.gauge-row {
+  margin-bottom: 12px;
+}
+.gauge-label {
+  display: flex;
+  justify-content: space-between;
+  text-transform: capitalize;
+}
+.gauge-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--line);
+  margin: 4px 0;
+}
+.g-spent {
+  background: #e5484d;
+}
+.g-held {
+  background: #f2a900;
+}
+.g-avail {
+  background: #3b9b5c;
+}
+.gauge-legend {
+  color: var(--muted);
+  font-size: 12px;
+}
+.wcards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+.wcard {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-wrap: anywhere;
+}
+.wcard header {
+  display: flex;
+  justify-content: space-between;
+  text-transform: capitalize;
+}
+.wcard p {
+  margin: 2px 0;
+}
+.wcard .reason {
+  color: var(--ink);
+}
+.wcard code {
+  background: #eef3ff;
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+.wcard .row,
+.ledger-grid .row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+}
+.level {
+  background: var(--ink);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0 8px;
+  font-weight: 700;
+}
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.ledger-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.grid-host {
+  flex: 1;
+  min-height: 200px;
+}
+.pill {
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 12px;
+  text-transform: capitalize;
+}
+.pill-in {
+  background: #e3f6ea;
+  color: #1d6b3a;
+}
+.pill-out {
+  background: #fde8e8;
+  color: #9b1c1c;
+}
+.pill-ai {
+  background: #efe9ff;
+  color: #5b3cc4;
+}
+.pill-warn {
+  background: #fff4d6;
+  color: #8a5a00;
+}
+.pill-neutral {
+  background: #eef1f6;
+  color: #3d4a66;
+}
+.pill-ok {
+  background: #e3f6ea;
+  color: #1d6b3a;
+}

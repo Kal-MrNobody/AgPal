@@ -198,3 +198,17 @@ Next: **Prompt 10 — Agent runtime core.**
   approval cards with approve/deny + note.
 - Rendered against the simulated week (screens in `docs/screens/`).
 - Fix: `packages/shared` uses extensionless relative imports so Next's Turbopack can transpile it.
+
+## 2026-11-12 — Prompt 18: Dashboards and custom widgets
+
+- One boardroom theme (`apps/web/components/theme.ts`, CSS variables shared with the shell).
+- Custom Studio widgets, each in `apps/web/widgets/<name>/` with a README: **Envelope gauge** (data mapping +
+  `getData`), **Approval cards** (approve/deny via a server action passed in Studio `context`), **Agent scorecard**
+  (autonomy level, trust score and its inputs), **Ledger grid** (AG Grid Enterprise with flow/status pill cell
+  renderers, pinned debit/credit totals, CSV export).
+- Pages: Overview (cash, revenue, AI cost, approvals, alerts, runway; revenue vs AI cost by department), Departments
+  (P&L grid, burn chart, envelope gauges), Approvals, Ledger (filters, debits by flow, ledger grid), Agents
+  (scorecards, staff, AI cost by agent, runs), Reconciliation. Screens in `docs/screens/`.
+- Trust record for scorecards (`packages/policy/src/autonomy.ts`, constitution §4) served by the API.
+- Lessons: Studio custom data mappings use `intent: 'category' | 'value'`; `requires: { cardinality: 'one' }`
+  forces a single aggregated row.

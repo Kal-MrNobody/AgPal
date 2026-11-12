@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { and, desc, eq, isNull, sql } from 'drizzle-orm';
 import {
+  agentControls,
   agentRuns,
   agents,
   alerts,
@@ -10,7 +11,7 @@ import {
   spendIntents,
   type Database,
 } from '@agpal/db';
-import type { Services } from '@agpal/policy';
+import { trustRecord, type Services } from '@agpal/policy';
 
 export interface RouteDeps {
   db: Database;
@@ -216,9 +217,18 @@ export async function boardroomData(deps: RouteDeps, co: string) {
     .where(eq(spendIntents.companyId, co))
     .orderBy(desc(spendIntents.createdAt))
     .limit(2000);
-  const agentRows = staff.map((a) => {
+  const controls = await db.select().from(agentControls).where(eq(agentControls.companyId, co));
+  const agentRows = [];
+  for (const a of staff) {
     const mine = intents.filter((i) => i.agentId === a.id);
-    return {
+    const ctl = controls.find((c) => c.agentId === a.id);
+    const trust = await trustRecord(db, co, a.id, a.department);
+    agentRows.push({
+      autonomyLevel: ctl?.pinnedLevel ?? ctl?.autonomyLevel ?? 1,
+      pinned: ctl?.pinnedLevel !== null && ctl?.pinnedLevel !== undefined,
+      trustScore: trust.score,
+      acceptedWork: trust.acceptedWork,
+      reversals: trust.reversals,
       agentId: a.id,
       title: a.title,
       department: a.department,
@@ -232,8 +242,8 @@ export async function boardroomData(deps: RouteDeps, co: string) {
       approved: mine.filter((i) => i.decision === 'approve').length,
       held: mine.filter((i) => i.decision === 'hold_for_founder').length,
       denied: mine.filter((i) => i.decision === 'deny').length,
-    };
-  });
+    });
+  }
   const apr = await db
     .select()
     .from(approvals)

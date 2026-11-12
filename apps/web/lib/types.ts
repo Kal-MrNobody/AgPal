@@ -59,6 +59,11 @@ export interface BoardroomData {
     approved: number;
     held: number;
     denied: number;
+    autonomyLevel: number;
+    pinned: boolean;
+    trustScore: number;
+    acceptedWork: number;
+    reversals: number;
   }[];
   agentRuns: {
     runId: string;

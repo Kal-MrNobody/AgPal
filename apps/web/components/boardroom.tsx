@@ -3,12 +3,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   enableStudioDevValidations,
+  type AgDataSourcesDefinition,
   type AgDataTransaction,
   type AgStudioApi,
   type AgStudioMode,
 } from 'ag-studio';
 import { AgStudio } from 'ag-studio-react';
-import { refreshData } from '../app/actions';
+import { decideApproval, refreshData } from '../app/actions';
+import { boardroomWidgets } from '../widgets';
+import type { BoardroomContext, BoardroomRegistry } from '../widgets/registry';
+import { boardroomStore } from '../widgets/store';
+import { boardroomTheme } from './theme';
 import type { BoardroomData, PageId } from '../lib/types';
 import { buildSources, initialReport, rowsFor, TABLE_KEYS, type TableId } from './studio-config';
 
@@ -26,8 +31,24 @@ export function Boardroom({ data, page }: { data: BoardroomData; page: PageId })
   const [ready, setReady] = useState(false);
   const [updatedAt, setUpdatedAt] = useState(data.asOf);
   // Studio reads `data` and `initialState` once; later changes go through transactions and setState.
-  const sources = useMemo(() => buildSources(data), []);
+  // Built against the default registry; the boardroom registry adds the custom widget types.
+  const sources = useMemo(
+    () => buildSources(data) as unknown as AgDataSourcesDefinition<BoardroomRegistry>,
+    [],
+  );
   const initialState = useMemo(() => initialReport(page), []);
+  const widgets = useMemo(() => boardroomWidgets(), []);
+  const context = useMemo<BoardroomContext>(
+    () => ({
+      decide: async (id, decision, note) => {
+        const r = await decideApproval(id, decision, note);
+        boardroomStore.set(await refreshData());
+        return r;
+      },
+    }),
+    [],
+  );
+  if (!boardroomStore.get()) boardroomStore.set(data);
 
   useEffect(() => {
     const api = apiRef.current;
@@ -51,6 +72,7 @@ export function Boardroom({ data, page }: { data: BoardroomData; page: PageId })
           ) as unknown as AgDataTransaction[],
         );
         lastRows.current = next;
+        boardroomStore.set(fresh);
         setUpdatedAt(fresh.asOf);
       });
     }, 15_000);
@@ -76,8 +98,11 @@ export function Boardroom({ data, page }: { data: BoardroomData; page: PageId })
       </div>
       <div className="studio">
         {/* While Studio loads, render an empty sized container (never null). */}
-        <AgStudio
+        <AgStudio<BoardroomRegistry>
           style={{ height: '100%', width: '100%' }}
+          theme={boardroomTheme}
+          widgets={widgets}
+          context={context}
           data={sources}
           initialState={initialState}
           mode={mode}
