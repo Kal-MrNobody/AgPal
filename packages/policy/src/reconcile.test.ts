@@ -149,14 +149,12 @@ describe.runIf(hasDb)('Reconciler', () => {
   });
 
   it('suspense: unresolved suspense alerts keep reconciliation red', async () => {
-    await t.db
-      .insert(alerts)
-      .values({
-        id: newId('alr'),
-        companyId: co,
-        kind: 'webhook.suspense',
-        message: 'orphan refund',
-      });
+    await t.db.insert(alerts).values({
+      id: newId('alr'),
+      companyId: co,
+      kind: 'webhook.suspense',
+      message: 'orphan refund',
+    });
     const r = await run();
     expect(r.counts.suspense).toBe(1);
     expect(r.clean).toBe(false);
