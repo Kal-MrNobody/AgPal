@@ -1,17 +1,19 @@
 import type { BoardroomData } from '../lib/types';
 
-/** The boardroom's latest data for custom widgets that need whole rows (approval cards, scorecards). */
+/** The boardroom's latest data for custom widgets that need whole rows (approval cards, scorecards, ledger grid). */
 let current: BoardroomData | undefined;
 const listeners = new Set<() => void>();
 
-export const boardroomStore = {
-  set(d: BoardroomData) {
-    current = d;
-    for (const l of listeners) l();
-  },
-  get: () => current,
-  subscribe(l: () => void) {
-    listeners.add(l);
-    return () => listeners.delete(l);
-  },
+const set = (d: BoardroomData): void => {
+  current = d;
+  for (const l of listeners) l();
 };
+const get = (): BoardroomData | undefined => current;
+const subscribe = (l: () => void): (() => void) => {
+  listeners.add(l);
+  return () => {
+    listeners.delete(l);
+  };
+};
+
+export const boardroomStore = { set, get, subscribe } as const;

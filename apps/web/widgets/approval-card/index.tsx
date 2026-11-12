@@ -10,9 +10,9 @@ import { boardroomStore } from '../store';
  * Approval card: each pending founder approval with the intent, the rule that fired and the agent's reason. Approve
  * and deny call the boardroom's server action (passed in Studio's `context`); the gate re-checks on the server.
  */
-export default function ApprovalCard({
-  context,
-}: AgWidgetParams<ApprovalCardDef, BoardroomContext>) {
+export default function ApprovalCard(params: AgWidgetParams<ApprovalCardDef>) {
+  // Studio's `context` property: server actions only (no keys reach the browser).
+  const context = params.context as BoardroomContext;
   const data = useSyncExternalStore(
     boardroomStore.subscribe,
     boardroomStore.get,
