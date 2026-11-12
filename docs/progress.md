@@ -299,3 +299,10 @@ Next: **Prompt 10 — Agent runtime core.**
 - `pnpm seed:demo` (dry simulated week), `pnpm webhook:register --url …` (registers the production PayPal webhook via
   the API), `docs/deploy.md` (exact clicks + verification checklist).
 - **Not deployed from this session**: it needs the founder's Render account (Blueprint connect is a dashboard action).
+
+## 2026-11-12 — Prompt 26: README and demo script
+
+- `README.md` for judges: what AgPal is, invariants and how each is enforced, 60-second quickstart, architecture
+  diagram, PayPal APIs used, AG Studio / Bryntum usage, APIMatic write-up link.
+- `docs/demo-script.md`: a timed 3-minute demo walkthrough.
+- Remaining founder actions: deploy the Render Blueprint (`docs/deploy.md`), record the demo, submit on Devpost.
