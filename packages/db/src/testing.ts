@@ -38,6 +38,16 @@ export async function createTestDatabase(): Promise<TestDatabase> {
       await db.$client.end();
       const c = new pg.Client({ connectionString: admin });
       await c.connect();
+      // pool.end() resolves before its clients finish disconnecting; forcing the drop while they close makes
+      // them emit unhandled 57P01 errors. Wait (bounded) for them to go, then force anything left.
+      for (let i = 0; i < 50; i++) {
+        const r = await c.query<{ n: string }>(
+          'SELECT count(*) AS n FROM pg_stat_activity WHERE datname = $1',
+          [name],
+        );
+        if (r.rows[0]?.n === '0') break;
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
       await c.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
       await c.end();
     },
