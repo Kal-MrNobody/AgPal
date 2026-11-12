@@ -268,3 +268,13 @@ Next: **Prompt 10 — Agent runtime core.**
   compromised model. **14/14 held.** Report: `docs/redteam.md`.
 - Fixed in code: Growth payouts must cite a delivered task (payee = task contractor, amount ≤ agreed price, paid once);
   internal invoices must bill a delivered, requested task, once.
+
+## 2026-11-12 — Prompt 23: Chaos and reliability
+
+- `Gate.recoverStuck()` (worker every 5 min): executes intents that were approved and reserved but never executed
+  (crash between hold and provider call), with the original idempotency key.
+- `packages/policy/src/chaos.test.ts` (6): lost capture response (same request id, booked once); timeout after PayPal
+  accepted a payout (hold kept, retry sends nothing new); crash between hold and PayPal call (recovered once);
+  double-clicked approval (one payout); simultaneous spends on one envelope (never overspent); rejected approval
+  releases its hold — each ends with an invariant check. Duplicate/out-of-order webhooks and token expiry are covered
+  in `webhooks.test.ts` and `http.test.ts`. Recovery paths: `docs/runbook.md`.

@@ -93,6 +93,13 @@ if (
   }, 30_000);
 }
 
+// Crash recovery: execute approved-but-never-executed intents (idempotent).
+setInterval(() => {
+  void services.gate.recoverStuck().catch((e: unknown) => {
+    console.error('recovery failed', e instanceof Error ? e.message : 'unknown');
+  });
+}, 5 * 60_000);
+
 // Nightly reconciliation (03:17 UTC) for the deployment's company.
 await boss.schedule(QUEUES.reconciliation, '17 3 * * *', {});
 await boss.work(QUEUES.reconciliation, async () => {
