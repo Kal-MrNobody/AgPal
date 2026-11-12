@@ -1,0 +1,13 @@
+node_modules/
+.turbo/
+.next/
+dist/
+coverage/
+*.tsbuildinfo
+*.log
+.DS_Store
+
+# Secrets: never commit. Only .env.example is tracked.
+.env
+.env.*
+!.env.example
